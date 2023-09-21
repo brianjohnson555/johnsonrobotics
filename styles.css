@@ -70,8 +70,8 @@ nav a:active{
 
 .article {
     position: relative;
-    width: 650px;
-    height: 240px;
+    width: 400px;
+    height: 400px;
     margin: 50px 50px 50px 25px;
     float: left;
     border: solid;
@@ -91,11 +91,11 @@ nav a:active{
 
 .article .box {
     position: absolute;
-    width: 300px;
-    height: 200px;
+    width: 400px;
+    height: 400px;
     background: rgb(255, 255, 255, 0.00);
     margin: 10px;
-    float: left;
+    float: none;
     display: inline-block;
     z-index: 1;
 }
