@@ -1,0 +1,24 @@
+## TO DO LIST!
+
+Home page:
+- add photos to projects
+- add link to project box, go to page on click
+- fix footer
+
+Add page for sTISSUE
+- link to nav bar
+- embed youtube video
+- add some basic paragraphs and figures
+- add link to paper
+
+Add page for APF
+- link to nav bar
+- link to arxiv
+
+Publications page:
+- add links/embed files for preprint/open access papers
+
+Resume/contact page:
+- make download links work
+- add full CV file
+
