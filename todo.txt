@@ -1,24 +1,26 @@
 ## TO DO LIST!
+- maybe move contact info to top of page, just below header
+- make font darker
+- add resume download to home page
 
 Home page:
 - add photos to projects
 - add link to project box, go to page on click
-- fix footer
 
 Add page for sTISSUE
-- link to nav bar
-- embed youtube video
 - add some basic paragraphs and figures
-- add link to paper
 
 Add page for APF
-- link to nav bar
-- link to arxiv
-
-Publications page:
-- add links/embed files for preprint/open access papers
+- add some basic paragraphs and figures
+- link to manuscript?
 
 Resume/contact page:
-- make download links work
-- add full CV file
+- make download link work
+- remove CV button
+- update resume on overleaf to 2 pages
 
+Third project:
+- what will I add?
+    (1) ML/LSTM of HASEL sensor data
+    (2) Haptic display w/ algorithm description
+    (3) Some other project (mujoco something?)

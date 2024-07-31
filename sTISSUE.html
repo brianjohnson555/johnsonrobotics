@@ -56,7 +56,7 @@
 
 									<p>This work, part of my Ph.D. thesis, focuses on the development and control of 
 										a multifunctional, high-degree-of-freedom (DoF) shape display. 
-										This video gives an overview and highlights the capabilities of the device:
+										This video which I produced gives an overview and highlights the capabilities of the device:
 									</p>
 
 									<row class="aln-center"><iframe width="560" height="315" src = "https://www.youtube.com/embed/ZA1DJnWLeOM?si=vFqGvKsNcjVbb8aE" title="YouTube video player" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></row>
@@ -64,19 +64,31 @@
 									<p>In this project, my coauthors and I developed the "soft" shape display you see above. 
 										The device is driven by an array of 100 "hydraulically-amplified self-healing electrostatic actuators" 
 										(HASEL actuators) which are both strong and energy efficient. We also incorporated an array of 100 
-										Hall effect-based position sensors, one for each actuator, enabling both displacement- and force-feedback.
+										Hall effect-based position sensors, one for each actuator, enabling both displacement- and force-feedback across the device.
 									</p>
 
-									<p>As a lead author of the project (together with my coauthor Mantas Naris), 
+									<p>As a lead author of the project (together with my coauthor Dr. Mantas Naris), 
 										I oversaw the fabrication and testing of the shape display, characterized the actuator performance and implemented
 									 feedback control strategies (more on that below), and developed the variety of technical demonstrations you can see in the overview video. 
-									 I also carried out the paper publication process including writing, editing, developing figure graphics and videos (like the one above), and working with Nature editorial staff 
-									 to publish our work in Nature Communications based on peer reviewed feedback.
+									 I also carried out the paper publication process including writing, editing, developing figure graphics and videos like the one above, and working with Nature editorial staff 
+									 to publish our work in Nature Communications based on peer-reviewed feedback.
 									</p>
 
-									<h3>Characterization and control of the actuator array</h3>
+									<h3>Actuation, sensing, and control of the display</h3>
+									<p>The actuator array that drives this soft shape display is a 10x10 grid of HASEL (electrostatic) actuators. 
+										Each actuator transduces voltage and current to strain and force outputs on each display pixel. 
+										As a "soft" actuator, its performance is also nonlinear including hysteresis and strain relaxation over time.
+									</p>
 
-									<p></p>
+									<p>To control the display, I characterized the open- and closed-loop performance of each actuator (each pixel) in the 100-actuator array and used the mean performance for control design. 
+										The plot below, included in the published paper, shows the actuator charge rate in response to the PWM control signal (the circuit uses a half-bridge arrangement, so we have both positive and negative control input): 
+									</p>
+
+									<p>TEMPORARY, PLOT HERE</p>
+
+									<p>Using this PWM control input, I evaluated the frequency response of the electrical and physical dynamics of the actuators, in turn using this information to design the closed-loop electrical dynamics.
+										 This allowed me to control the voltage of each actuator in the display with high precision, resulting in precise shape deformation of the surface.
+									</p>
 
 								</article>
 
