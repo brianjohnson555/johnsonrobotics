@@ -198,13 +198,13 @@ input, select, textarea {
 	.container {
 		margin: 0 auto;
 		max-width: 100%;
-		width: 1400px;
+		width: 1800px;
 	}
 
 		@media screen and (max-width: 1680px) {
 
 			.container {
-				width: 1200px;
+				width: 1560px;
 			}
 
 		}
@@ -212,7 +212,7 @@ input, select, textarea {
 		@media screen and (max-width: 1280px) {
 
 			.container {
-				width: 960px;
+				width: 1160px;
 			}
 
 		}
@@ -1909,7 +1909,7 @@ input, select, textarea {
 /* Wrappers */
 
 	#header-wrapper {
-		padding: 4.5em 0 3em 0;
+		padding: 2em 0 1.5em 0;
 	}
 
 	#features-wrapper {
