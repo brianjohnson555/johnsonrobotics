@@ -1,15 +1,14 @@
 ## TO DO LIST!
 
+- make font darker/bigger
+
 Home page:
 - add photos to projects
 - add link to project box, go to page on click
 - fix footer
 
 Add page for sTISSUE
-- link to nav bar
-- embed youtube video
-- add some basic paragraphs and figures
-- add link to paper
+- finish basic description, add some figures
 
 Add page for APF
 - link to nav bar
