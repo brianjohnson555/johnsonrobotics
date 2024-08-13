@@ -198,13 +198,13 @@ input, select, textarea {
 	.container {
 		margin: 0 auto;
 		max-width: 100%;
-		width: 1800px;
+		width: 1820px;
 	}
 
 		@media screen and (max-width: 1680px) {
 
 			.container {
-				width: 1560px;
+				width: 1580px;
 			}
 
 		}
@@ -212,7 +212,7 @@ input, select, textarea {
 		@media screen and (max-width: 1280px) {
 
 			.container {
-				width: 1160px;
+				width: 1180px;
 			}
 
 		}
@@ -1639,12 +1639,12 @@ input, select, textarea {
 		color: #fff;
 		text-decoration: none;
 		border-radius: 6px;
-		font-weight: 800;
+		font-weight: 600;
 		outline: 0;
 		border: 0;
 		cursor: pointer;
-		font-size: 1.35em;
-		padding: 0.6em 1.5em;
+		font-size: 1.25em;
+		padding: 0.2em 1em;
 	}
 
 		input[type="button"].icon:before,
@@ -2124,6 +2124,12 @@ input, select, textarea {
 		#footer a {
 			color: inherit;
 		}
+	
+	#contact {
+		color: #363636;
+		padding: 0 0 0 0;
+		text-align: center;
+	}
 
 	#copyright {
 		color: #aaa;
