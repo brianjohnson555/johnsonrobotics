@@ -97,7 +97,7 @@ input, select, textarea {
 		background-repeat: repeat-x, repeat;
 		background-size: 100% 30em, auto;
 		font-family: 'Open Sans', sans-serif;
-		font-size: 13pt;
+		font-size: 16pt;
 		color: #2d2d2d;
 		font-weight: 300;
 		line-height: 2.25em;
@@ -1966,7 +1966,7 @@ input, select, textarea {
 		position: absolute;
 		right: 0;
 		top: 0;
-		font-size: 0.9em;
+		font-size: 1.2em;
 	}
 
 		#nav ul {

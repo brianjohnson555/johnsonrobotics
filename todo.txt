@@ -1,29 +1,11 @@
 ## TO DO LIST!
-- maybe move contact info to top of page, just below header
-- make font darker
-- add resume download to home page
-
-- make font darker/bigger
 
 Home page:
 - add photos to projects
 - add link to project box, go to page on click
 
-Add page for sTISSUE
-<<<<<<< HEAD
-- finish basic description, add some figures
-=======
-- add some basic paragraphs and figures
->>>>>>> a2a340341cc0481ca8de74e021d2848e1d4d760a
-
-Add page for APF
-- add some basic paragraphs and figures
-- link to manuscript?
-
 Resume/contact page:
-- make download link work
-- remove CV button
-- update resume on overleaf to 2 pages
+- update resume on overleaf
 
 Third project:
 - what will I add?
