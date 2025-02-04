@@ -42,42 +42,48 @@
 
 							<!-- Content -->
 								<article>
-
-									<h2>Chinese Text Simplification for Reading Comprehension (NLP)</h2>
+									<div class="container">
+											<a class="image featured"><img src="../images/stock_chinese.jpg" style="display:block; height:40%; width:30%; position:relative; margin-left: auto; margin-right: auto;"/></a>
+									</div>
+									
+									
+									<h2>Chinese Text Simplification for Reading Comprehension (Part 1)</h2>
+									<p><i>A personal project in NLP, ML, and BART modeling</i></p>
 
 									<h3>The problem</h3>
-									<p>Text simplification is the process of reducing the linguistic complexity of
+									<p>Text simplification (TS) is the process of reducing the linguistic complexity of
 										written text in order to improve readability for people with low reading skills, 
-										children, non-native speakers, or language learners. As a language learner of Chinese,
-										I became interested in the idea of Chinese text simplification to serve as a tool to
-										improve my reading abilities.
+										children, non-native speakers, or language learners. A subset of this, called lexical
+										simplification (LS), is focused only on reducing the word complexity while the sentence
+										structure remains unchanged. As a language learner of Chinese, I became interested in 
+										the idea of Chinese TS and LS to serve as a tool to improve my reading abilities.
 									</p>
 									<p>How can text simplification improve reading skills? Through <i>extensive reading</i> --
 										reading passages in which a large amount (about 95%) of the words are understood.
-										With this method, readers can focus more on the cadence of the language and read at
+										With this method, readers can focus more on the language's natural cadence and read at
 										faster speeds, compared with more <i>intensive</i> reading where a large amount of words
-										are unknown and time-consuming dictionary lookups are required to progress through the text.
-										Because most of the words are understood in intensive reading, it's easier to use context-clues
+										are unknown and more time is spent looking up new words.
+										Because most of the words are understood in extensive reading, it's easier to use context-clues
 										to infer the meaning of new vocabulary.
 									</p>
-									<p>Chinese language is often evaluated with HSK (Hanyu Shuiping Kaoshi, 汉语水平考试 - Chinese proficiency exam).
+									<p><b>My goal is this: implement a Chinese language TS/LS scheme that can accept a wide range
+										of text passages as an input, and output a simplified passage with reduce vocabulary complexity
+										to promote intensive reading practice.</b>
+									</p>
+									<p>Chinese language ability is official evaluated with the HSK (Hanyu Shuiping Kaoshi - Chinese proficiency exam).
 										The latest set of HSK vocabulary has cumulative levels from 1 to 9 (HSK1 being beginner level) with a total of about 10,000
-										vocabulary words. While knowing all 10,000 words won't make you fluent in Chinese, you should be quite proficient.
-										Because the HSK is so popular (and used officially in China to evaluate Chinese proficiency similar to ESL 
-										exams in the United States or Europe), learning content is often rated for each HSK level - for example, a
-										short story might only use words from the HSK3 vocabulary set to make it easier for beginners to read. Unfortunately,
-										I've found that HSK-graded content is still limited in volume, making it challenging for <i>extensive readers</i> to read
-										material appropriate to their skill level.									
+										vocabulary words. Because Chinese learners -- including myself -- often use the HSK system as both a study
+										tool and a proficiency goal, I aim to specifically focus on HSK-level vocabulary in my TS/LS approach.
 									</p>
-									<p>With that said, <b>my goal is this: implement a Chinese language text simplification scheme that can accept a wide range
-										of text passages as an input, and replace advanced vocabulary with vocabulary in the HSK system
-										graded to the individual's HSK level while retaining overall text meaning.</b>
-									</p>
+									
 
 									<h3>My approach</h3>
-									<p>My approach to create this text simplification scheme is to use natural language processing (NLP) tools
-										at the word and sentence level.
+									<p>My approach is to employ both NLP tools and wider ML models like BART to implement Chinese TS/LS.
+										I will focus entirely on Python, which has a vast array of ML and NLP packages and models. I will also
+										cover my approach in scraping the text from web URLs and re-generating new html with the simplified text.
+										In the next part of this article, I'll describe and break down my first approach: <b>niave LS using jieba package</b>.
 									</p>
+									<p>Cont...</p>
 
 								</article>
 
