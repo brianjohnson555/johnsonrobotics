@@ -73,6 +73,10 @@ input, select, textarea {
 	appearance: none;
 }
 
+p {
+	font-size: 13pt;
+}
+
 /* Basic */
 
 	@-ms-viewport {
@@ -131,7 +135,6 @@ input, select, textarea {
 		line-height: 1em;
 		text-align: center;
 		margin: 0 0 2em 0;
-		italic
 	}
 
 	a {

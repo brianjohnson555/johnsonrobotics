@@ -76,21 +76,23 @@
 									</p>
 
 									<div class="container">
-										<a class="image centered"><img src="../images/ls_example_al_thanyyan_et_al_2021.PNG" style="width:50%;"/></a>
+										<a class="image centered"><img src="../images/ls_example_al_thanyyan_et_al_2021.PNG" style="width:60%;"/></a>
 										<figcaption>Lexical simplification process. <a href="#thanyyan2021">[1]</a></figcation>
 									</div>
 
-									<p>For many languages, LS requires performing a morphological analysis of the complex word, either through computation methods
-										or rule-based tags, so that the replaced simple word matches the original word tense and context.
-										For example, to simplify <i>"The horse galloped to the stables"</i>, the complex word "galloped" must be determined to
-										be in the past tense, so that the replacement word e.g. "ran" is also in the past tense. Luckily, Chinese grammar is very
-										simple in this regard: verb characters are never modified directly, and there are no special conjugation rules that alter a word
-										based on tense, speaker, or case. However, context is still very important, as some Chinese words and characters change meaning based
-										on context. With that said, let's dive in to the process by first identifying complex words.
+									<p>For many languages, LS requires performing a morphological analysis of the complex word, either through computational or 
+										rule-based methods, so that the replaced simple word matches the original word tense and context.
+										For example, the simplication of <i>"The horse galloped to the stables"</i> should read <it>"The horse <b>ran</b> to the stables"</it>
+										rather than "runs" or "running". In this regard, Chinese grammar is very simple: verb characters are never 
+										modified directly, and there are no special conjugation rules that alter a word
+										based on tense, speaker, or case. However, some Chinese characters can change meaning based
+										on context, or the figurative use-case may be different than the literal. With that said, 
+										let's dive in to the process by first identifying complex words.
 									</p>
 
 									<h3>Recognizing complex Chinese words and Named Entities</h3>
-									<p>This part of the site is under construction!
+									<p>For the simplest LS (see image above), it is sufficient in Chinese to find a synonym simple word to replace a complex word. 
+										Therefore, my first task is (1) identifying complex words, and (2) identifying synonyms. 
 									</p>
 
 									<a href="../Projects/textsimplification_part3" style="font-size:20px;"><p style="text-align: center;">Continued in Part 3 (currently unavailable)</p></a>
