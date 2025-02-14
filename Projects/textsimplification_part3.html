@@ -61,50 +61,8 @@
 
 									</div>
 
-									<h3>Applying NLP LS approaches to Chinese text</h3>
-									<p>To recap from Part 1, I'm going to explore traditional NLP methods for LS to approach my project
-										problem of simplifying online Chinese text. While NLP has been revolutionized by the use of
-										large language models (LLMs) like GPT, previous NLP techniques could still be useful to our problem.
-										In particular, these approaches can be much less computationally intensive than running
-										text through a LLM with more than 100 million parameters, and could provide acceptable simplification results
-										if the input sentence is not too complex in syntactic structure.
-									</p>
-
-									<p>The typical process for LS is shown in the image below. To summarize, we (1) identify complex words in the sentence,
-										(2) find candidate words with similar meanings to the complex word, (3) rank the candidate words, and (4) replace
-										the word in the sentence to form the simplified sentence.
-									</p>
-
-									<div class="container">
-										<a class="image centered"><img src="../images/ls_example_al_thanyyan_et_al_2021.PNG" style="width:60%;"/></a>
-										<figcaption>Lexical simplification process. <a href="#thanyyan2021">[1]</a></figcation>
-									</div>
-
-									<p>For many languages, LS requires performing a morphological analysis of the complex word, either through computational or 
-										rule-based methods, so that the replaced simple word matches the original word tense and context.
-										For example, the simplication of <i>"The horse galloped to the stables"</i> should read <it>"The horse <b>ran</b> to the stables"</it>
-										rather than "runs" or "running". In this regard, Chinese grammar is very simple: verb characters are never 
-										modified directly, and there are no special conjugation rules that alter a word
-										based on tense, speaker, or case. However, some Chinese characters can change meaning based
-										on context, or the figurative use-case may be different than the literal. With that said, 
-										let's dive in to the process by first identifying complex words.
-									</p>
-
-									<h3>Recognizing complex Chinese words and Named Entities</h3>
-									<p>For the simplest LS (see image above), it is sufficient in Chinese to find a synonym simple word to replace a complex word. 
-										Therefore, my first task is (1) identifying complex words, and (2) identifying synonyms. 
-									</p>
-
-									<p>Chinese language ability is official evaluated with the HSK (Hanyu Shuiping Kaoshi - Chinese proficiency exam).
-										The latest set of HSK vocabulary has cumulative levels from 1 to 9 (HSK1 being beginner level) with a total of about 11,000
-										vocabulary words. Because Chinese learners -- including myself -- often use the HSK system as both a study
-										tool and a proficiency goal, I aim to specifically focus on HSK-level vocabulary in my TS/LS approach.
-									</p>
-
-									<a href="../Projects/textsimplification_part3" style="font-size:20px;"><p style="text-align: center;">Continued in Part 3 (currently unavailable)</p></a>
-
-									<p><a id="thanyyan2021" style="color: inherit; text-decoration: none;">[1] Al-Thanyyan et al., "Automated Text Simplification: A Survey," <i>ACM Computing Surveys</i>, <b>52</b>, 2, 
-										<a href="https://doi.org/10.1145/3442695" target="_blank">https://doi.org/10.1145/3442695</a> (2024)</a> 
+									<h3>Fine-tuning a BART model for sentence-level text simplification</h3>
+									<p>This part of the blog is under construction!
 									</p>
 								</article>
 

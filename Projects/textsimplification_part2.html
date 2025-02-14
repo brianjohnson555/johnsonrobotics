@@ -162,22 +162,43 @@ complex_words = find_complex_words(tokens_no_ner, HSK_thresh=5, freq_thresh=0.98
 
 									<h3>Step 3: Finding substitution candidates</h3>
 									<p>
-										text
+										Using our custom dictionary, it is easy to find candidate words by getting the dictionary
+										values for each token key. However, we want to double check the list of similar words: we 
+										don't want to replace a high-frequency word with a word that has a much lower frequency, as 
+										it is less likely to be known, even if it might be a perfect synonym for the complex word!
 									</p>
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+freq_difference = 0.99
+
+for word in complex_words:
+	candidates = similarity_dict[word] # use our dictionary to find similar words
+	# remove candidates with lower frequency than the original word:
+	word_freq = blcu.loc[word].values[0]
+	for candidate in candidates:
+		cand_freq = blcu.loc[candidate].values[0]
+		if cand_freq &lt; word_freq*freq_difference:
+			candidates.remove(candidate)
+									</code></pre>
 
 									<h3>Step 4: Ranking substitution candidates</h3>
 									<p>
-										text
+										Once potential candidate substitutions have been identified, we can rank them
+										by replacing the word with the candidate in the sentence and computing the cosine
+										similarity between the new and original sentence. The candidate with the highest
+										cosine similarity is probably going to be the best fit!
 									</p>
 
 									<h3>Step 5: Replacing words recursively</h3>
 									<p>
-										text
+										This part of the blog is under construction! To summarize, I perform the above substitution
+										and replacement process for each complex word originally identified. I do this recursively, so
+										the next complex word is being substituted in the sentence with the previous complex word already
+										replaced. This should increase the overall fluency of the final sentence at the risk of changing the
+										overall sentence meaning.
 									</p>
-
 									<h3>Conclusion</h3>
 									<p>
-										That concludes Part 2 of this project -- an LS pipeline using NLP tools! See the future Part 4 for the
+										That concludes Part 2 of this project -- a LS pipeline using NLP tools! See the future Part 4 for the
 										evaluation of the pipeline on my validation and test data. But for now, let's look at a different approach
 										for Part 3: implementing complete sentence simplification by fine-tuning BART.
 									</p>
