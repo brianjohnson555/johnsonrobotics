@@ -9,8 +9,10 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="../assets/css/main.css" />
+		<link rel="stylesheet" href="../assets/css/prism.css" />
 	</head>
 	<body class="is-preload no-sidebar">
+		<script src="../assets/js/prism.js"></script>
 		<div id="page-wrapper">
 
 			<!-- Header -->
@@ -49,53 +51,120 @@
 									
 									<h2>Chinese Text Simplification for Reading Comprehension (Part 2)</h2>
 
-									<div class="container">
-										<div class="row">
-											<div class="col-6 col-12-small" style="text-align: center;">
-												<a href="../Projects/textsimplification.html" style="font-size:18px;">(Back to Part 1)</a>
+									<div class="container" style="text-align: center; margin-top:-1em; margin-bottom:2em; font-weight:bold; font-size:18px;">
+										<div class="row" >
+											<div class="col-6 col-12-small">
+												<a href="../Projects/textsimplification.html">(Back to Part 1)</a>
 											</div>
-											<div class="col-6 col-12-small" style="text-align: center;">
-												<a href="../Projects/textsimplification_part3.html" style="font-size:18px;">(To Part 3)</a>
+											<div class="col-6 col-12-small">
+												<a href="../Projects/textsimplification_part3.html">(To Part 3)</a>
 											</div>	
 										</div>
 
 									</div>
 
-									<h3>Applying NLP LS approaches to Chinese text</h3>
-									<p>To recap from Part 1, I'm going to explore traditional NLP methods for LS to approach my project
-										problem of simplifying online Chinese text. While NLP has been revolutionized by the use of
-										large language models (LLMs) like GPT, previous NLP techniques could still be useful to our problem.
-										In particular, these approaches can be much less computationally intensive than running
-										text through a LLM with more than 100 million parameters, and could provide acceptable simplification results
-										if the input sentence is not too complex in syntactic structure.
+									<h3>Part 2 Summary</h3>
+									<p><i>I dive into a Lexical Simplification pipeline using NLP: tokenization, NER, complex word identification,
+										finding suitable substitution candidates, and replacing words recursively in the text.
+									</i>
 									</p>
 
-									<p>The typical process for LS is shown in the image below. To summarize, we (1) identify complex words in the sentence,
-										(2) find candidate words with similar meanings to the complex word, (3) rank the candidate words, and (4) replace
-										the word in the sentence to form the simplified sentence.
+									<h3>Applying NLP LS approaches to Chinese text</h3>
+									<p>To recap my problem, I want to implement a lexical simplification (LS) pipeline for simplifying Chinese sentences. 
+										While NLP has been revolutionized by the use of large language models (LLMs) like GPT, previous NLP techniques 
+										could still be useful as they could be less computationally intensive and do not require long training times with
+										large amounts of data. Because the approach is rather simplified, I only aim for lexical Simplification
+										(word replacement) rather than a complex sentence simplification with grammatical and structural changes. I will
+										save the complete text simplification method for my BART model in Part 3.
+									</p>
+
+									<p>I will implement a custom LS approach shown in the diagram below. To summarize, we (1) perform named entity recognition
+										(NER), (2) find complex words in the sentence, (3) find candidate words for substitution, (4) determine the best fit
+										among the candidates, and (5) replace the word in the sentence. This occurs recursively, so a sentence with multiple
+										complex words will be simplified word-by-word. I include the additional step of NER so that named entities are not
+										accidentally simplified, which would alter or destroy significant meaning of the sentence.
 									</p>
 
 									<div class="container">
-										<a class="image centered"><img src="../images/ls_example_al_thanyyan_et_al_2021.PNG" style="width:60%;"/></a>
-										<figcaption>Lexical simplification process. <a href="#thanyyan2021">[1]</a></figcation>
+										<a class="image centered"><img src="../images/project_TS/ls_example_al_thanyyan_et_al_2021.PNG" style="width:60%;"/></a>
+										<figcaption>Lexical simplification process. Modified from <a href="#thanyyan2021">[1]</a></figcation>
 									</div>
 
-									<p>For many languages, LS requires performing a morphological analysis of the complex word, either through computational or 
-										rule-based methods, so that the replaced simple word matches the original word tense and context.
-										For example, the simplication of <i>"The horse galloped to the stables"</i> should read <it>"The horse <b>ran</b> to the stables"</it>
-										rather than "runs" or "running". In this regard, Chinese grammar is very simple: verb characters are never 
-										modified directly, and there are no special conjugation rules that alter a word
-										based on tense, speaker, or case. However, some Chinese characters can change meaning based
-										on context, or the figurative use-case may be different than the literal. With that said, 
-										let's dive in to the process by first identifying complex words.
+									<p>Some context on Chinese language: the individual words of a sentence are comprised of characters, of which there are 
+										many thousands. Words are typically one, two, or three characters long. Expressions can be three or four characters long
+										(e.g. similar to English terms like "social media", a single concept described across two words). A benefit of 
+										implementing LS in Chinese is that individual Chinese characters and words are immutable. The characters of a word
+										do not change based on subject, object, gender, number, or tense (having some experience with the German language, 
+										fellow learners can understand the frustration of a single verb mapping to 10+ different conjugation forms).
+										Therefore, it is very easy from a syntactic perspective to replace a complex word with a simple one: the only difficulty
+										is identifying which words are complex, and what synonyms or similar words can serve as substitutions. 
 									</p>
 
-									<h3>Recognizing complex Chinese words and Named Entities</h3>
-									<p>For the simplest LS (see image above), it is sufficient in Chinese to find a synonym simple word to replace a complex word. 
-										Therefore, my first task is (1) identifying complex words, and (2) identifying synonyms. 
+									<h3>Step 1: Recognizing complex Chinese words and Named Entities</h3>
+									<p>
+										For any NLP task, the first step of the process is tokenization. I will use the Chinese NLP package jieba for
+										easy tokenization of our text:
+									</p>	
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+import jieba
+
+# tokenize sentence:
+tokens = jieba.lcut(sentence)
+tokens = [token for token in tokens if not re.match(r'^\W+$', token)] # remove punctuation
+									</code></pre>
+
+									<p>
+										Now that the sentence is split into tokens, let's perform <i>named entity recognition</i> (NER). 
+										This identifies	named entities like names, places, organizations, etc which should not be simplified (e.g. you 
+										can't reduce the complexity of "Barack Obama" or "Amsterdam"). In Python, I use the
+										modelscope package with a pre-trained pipeline from DAMO Academy Alibaba:
 									</p>
 
-									<a href="../Projects/textsimplification_part3" style="font-size:20px;"><p style="text-align: center;">Continued in Part 3 (currently unavailable)</p></a>
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+from modelscope.pipelines import pipeline
+from modelscope.utils.constant import Tasks
+ner_pipeline = pipeline(Tasks.named_entity_recognition, 
+						'damo/nlp_raner_named-entity-recognition_chinese-base-news')
+										
+ner_output = ner_pipeline(sentence)['output'] # run NER pipeline, generate tokens
+tokens_ner = list(set([d['span'] for d in ner_output if len(d['span'])>1])) # get NER>1 character
+tokens_no_ner = list(set(tokens) - set(tokens_ner)) # get all tokens that are NOT named entities
+									</code></pre>
+
+									<h3>Step 2: Identifying complex words</h3>
+									<p>
+										text
+									</p>
+									<p>Chinese language ability is official evaluated with the HSK (Hanyu Shuiping Kaoshi - Chinese proficiency exam).
+										The latest set of HSK vocabulary has cumulative levels from 1 to 9 (HSK1 being beginner level) with a total of about 11,000
+										vocabulary words. Because Chinese learners -- including myself -- often use the HSK system as both a study
+										tool and a proficiency goal, I aim to specifically focus on HSK-level vocabulary in my TS/LS approach.
+									</p>
+
+									<h3>Step 3: Finding substitution candidates</h3>
+									<p>
+										text
+									</p>
+
+									<h3>Step 4: Ranking substitution candidates</h3>
+									<p>
+										text
+									</p>
+
+									<h3>Step 5: Replacing words recursively</h3>
+									<p>
+										text
+									</p>
+
+									<h3>Conclusion</h3>
+									<p>
+										That concludes Part 2 of this project -- an LS pipeline using NLP tools! See the future Part 4 for the
+										evaluation of the pipeline on my validation and test data. But for now, let's look at a different approach
+										for Part 3: implementing complete sentence simplification by fine-tuning BART.
+									</p>
+
+									<a href="../Projects/textsimplification_part3" style="font-size:20px;"><p style="text-align: center;">Continued in Part 3...</p></a>
 
 									<p><a id="thanyyan2021" style="color: inherit; text-decoration: none;">[1] Al-Thanyyan et al., "Automated Text Simplification: A Survey," <i>ACM Computing Surveys</i>, <b>52</b>, 2, 
 										<a href="https://doi.org/10.1145/3442695" target="_blank">https://doi.org/10.1145/3442695</a> (2024)</a> 

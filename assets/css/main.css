@@ -250,7 +250,7 @@ p {
 	
 	.container.blog {
 		justify-content: center;
-		width: 75%;
+		width: 65%;
 	}
 
 	.blog h2{
@@ -1750,6 +1750,7 @@ p {
 
 		ul li {
 			padding-left: 0.5em;
+			font-size: 13pt;
 		}
 
 		ul.style2 {

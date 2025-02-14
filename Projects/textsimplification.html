@@ -46,9 +46,19 @@
 											<a class="image featured"><img src="../images/stock_chinese.jpg" style="display:block; height:40%; width:30%; position:relative; margin-left: auto; margin-right: auto;"/></a>
 									</div>
 									
-									
 									<h2>Chinese Text Simplification for Reading Comprehension (Part 1)</h2>
 									<p style="text-align: center;"><i>A personal project in NLP, ML, and BART modeling</i></p>
+									
+									<div class="container" style="text-align: center; margin-top:-1em; margin-bottom:2em; font-weight:bold; font-size:18px;">
+										<a href="../Projects/textsimplification_part2.html">(Already read this? Part 2 is here.)</a>
+									</div>
+									
+									<h3>Part 1 Summary</h3>
+									<p><i>I introduce my project to implement Text Simplification using NLP and ML for Chinese language learning.
+										I discuss the benefits of Text Simplification, Lexical Simplification, and outline my approach to this
+										problem. Part 1 is an overview of the project; future articles cover the technical aspects and results.
+									</i>
+									</p>
 
 									<h3>The problem</h3>
 									<p><b>Text simplification (TS)</b> is the process of reducing the linguistic complexity of
@@ -60,7 +70,7 @@
 									</p>
 
 									<div class="container">
-										<a class="image centered"><img src="../images/ls_example_al_thanyyan_et_al_2021.PNG" style="width:60%;"/></a>
+										<a class="image centered"><img src="../images/project_TS/ls_example_al_thanyyan_et_al_2021.PNG" style="width:60%;"/></a>
 										<figcaption>A basic example of lexical simplification (LS). <a href="#thanyyan2021">[1]</a></figcation>
 									</div>
 
@@ -72,20 +82,15 @@
 										Because most of the words are understood in extensive reading, it's easier to use context-clues
 										to infer the meaning of new vocabulary.
 									</p>
-									<p><b>My goal is this: implement a Chinese language TS/LS scheme that can accept a wide range
-										of text passages as an input, and output a simplified passage with reduce lexical and grammatical complexity
+									<p><b>My goal is to implement a Chinese language TS/LS pipeline to automatically simplify online content
 										to promote intensive reading practice.</b>
-									</p>
-									<p>Chinese language ability is official evaluated with the HSK (Hanyu Shuiping Kaoshi - Chinese proficiency exam).
-										The latest set of HSK vocabulary has cumulative levels from 1 to 9 (HSK1 being beginner level) with a total of about 11,000
-										vocabulary words. Because Chinese learners -- including myself -- often use the HSK system as both a study
-										tool and a proficiency goal, I aim to specifically focus on HSK-level vocabulary in my TS/LS approach.
 									</p>
 
 									<h3>My approach</h3>
-									<p>My approach is to employ both NLP tools and wider ML models like BART to implement Chinese TS/LS.
-										I will implement my project in Python, which has a vast array of ML and NLP packages and models. I will also
-										cover my approach in scraping the text from web URLs and re-generating new html with the simplified text.
+									<p>My overall approach is to employ both NLP tools and ML language models like BART to implement Chinese TS/LS.
+										I will implement my project in Python, which has a vast array of ML and NLP packages and models. In future articles,
+										I will describe my implementation of an LS pipeline using NLP tools, a BART pipeline via fine-tuning, combined approaches
+										utilizing both traditional NLP + BART, evaluation tools, results, and final implementation for online content simplification.
 									</p>
 
 									<h3>Datasets</h3>
@@ -97,30 +102,37 @@
 									</p>
 
 									<div class="container">
-										<a class="image centered"><img src="../images/ls_example_chong_et_al_2024.PNG" style="width:60%;"/></a>
+										<a class="image centered"><img src="../images/project_TS/ls_example_chong_et_al_2024.PNG" style="width:60%;"/></a>
 										<figcaption>Example of a complex/simple sentence pair from MCTS <a href="#chong2024">[2]</a>. 
 										Each complex sentence has five human-created simplifications.</figcation>
 									</div>
 
-									<p>As the MCTS dataset is too small to apply to machine learning models, I will use the pseudo dataset for training and evaluation. 
+									<p>As the MCTS dataset is too small to apply to machine learning models, I will use the pseudo dataset for 
+										training and evaluation (see Part 3 of this project). 
 										The MCTS dataset can then serve as a test set for evaluating the final model.
+									</p>
+
+									<p>
+										I also employ vocabulary data for the traditional NLP methods; I will cover this in Part 2.
 									</p>
 
 									<h3>Project outline</h3>
 									<ul>
 										<li>
-											In Part 2 of this project, I'll cover some traditional NLP methods for lexical simplification and how I apply them to Chinese text.
-											I'll also discuss evaluation metrics for simplification and fluency.
+											Part 2: Lexical simplification using NLP tools.
 										</li>
 										<li>
-											In Part 3, I'll dive into fine-tuning a BART language model for TS and LS tasks. 
+											Part 3: Text simplification by fine-tuning Chinese BART.
 										</li>
 										<li>
-											In Part 4, I'll discuss a combined approach that utilizes both traditional and BART methods for TS.
+											Part 4: Evaluation metrics, performance of NLP-LS and BART-TS.
+										</li>
+										<li>
+											Part 5: Final implementation to simplify online content.
 										</li>
 									</ul>
 
-									<a href="../Projects/textsimplification_part2.html" style="font-size:20px;"><p style="text-align: center;">Let's begin in part 2 with traditional NLP approaches for LS!</p></a>
+									<a href="../Projects/textsimplification_part2.html" style="font-size:20px; font-weight:bold;"><p style="text-align: center;">Let's begin in part 2 with traditional NLP approaches for LS!</p></a>
 
 									<p><a id="thanyyan2021" style="color: inherit; text-decoration: none;">[1] Al-Thanyyan et al., "Automated Text Simplification: A Survey," <i>ACM Computing Surveys</i>, <b>52</b>, 2, 
 										<a href="https://doi.org/10.1145/3442695" target="_blank">https://doi.org/10.1145/3442695</a> (2024)</a> 
