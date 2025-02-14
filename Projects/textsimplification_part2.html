@@ -115,7 +115,7 @@ tokens = [token for token in tokens if not re.match(r'^\W+$', token)] # remove p
 									</code></pre>
 
 									<p>
-										Now that the sentence is split into tokens, let's perform <i>named entity recognition</i> (NER). 
+										Now that the sentence is split into tokens, let's perform <b>named entity recognition (NER)</b>. 
 										This identifies	named entities like names, places, organizations, etc which should not be simplified (e.g. you 
 										can't reduce the complexity of "Barack Obama" or "Amsterdam"). In Python, I use the
 										modelscope package with a pre-trained pipeline from DAMO Academy Alibaba:
@@ -134,13 +134,31 @@ tokens_no_ner = list(set(tokens) - set(tokens_ner)) # get all tokens that are NO
 
 									<h3>Step 2: Identifying complex words</h3>
 									<p>
-										text
+										Now we have a list of tokens, both simple and complex. How do we define simple vs complex? 
+										<b>I will take two approaches: first through the token's HSK rating, and second through its frequency
+										rating</b>. HSK (Hanyu Shuiping Kaoshi) is a measure of Chinese proficiency for foreign speakers, and it
+										includes a vocabulary list with a total of about 11,000 words ranked from 1 to 9 (1 being beginner level,
+										9 being most advanced). While not a perfect capture of difficulty, low-rank HSK words are generally learned
+										first and are typically easier to read. So, any word within the HSK vocabulary that is
+										above level 5 could be considered "complex", or at least more likely to have a synonym or similar word within
+										HSK 1-5. My other measure of complexity is with frequency; words and characters that appear rarely in written
+										content are less likely to be known by a reader, and might be replaced with more frequently occurring words.
 									</p>
-									<p>Chinese language ability is official evaluated with the HSK (Hanyu Shuiping Kaoshi - Chinese proficiency exam).
-										The latest set of HSK vocabulary has cumulative levels from 1 to 9 (HSK1 being beginner level) with a total of about 11,000
-										vocabulary words. Because Chinese learners -- including myself -- often use the HSK system as both a study
-										tool and a proficiency goal, I aim to specifically focus on HSK-level vocabulary in my TS/LS approach.
+
+									<p>
+										Let's implement complex word identification using some custom-build data structures. For more
+										information on how I created these, see my supplementary page.
 									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+def find_complex_words(tokens: list, HSK_thresh:int, freq_thresh:float):
+	complex_HSK = [token for token in tokens if (token in hsk_dict and hsk_dict[token]&gt;HSK_thresh)] # find all tokens above HSK level
+	complex_freq = [token for token in tokens if (token in blcu.index and blcu.loc[token].values[0]&lt;freq_thresh)] # find all tokens below freq level
+	complex_words = list(set(complex_HSK).union(complex_freq)) # combine by union
+	return complex_words
+
+complex_words = find_complex_words(tokens_no_ner, HSK_thresh=5, freq_thresh=0.98)
+									</code></pre>
 
 									<h3>Step 3: Finding substitution candidates</h3>
 									<p>
