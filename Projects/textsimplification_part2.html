@@ -65,7 +65,7 @@
 
 									<h3>Part 2 Summary</h3>
 									<p><i>I dive into a Lexical Simplification pipeline using NLP: tokenization, NER, complex word identification,
-										finding suitable substitution candidates, and replacing words recursively in the text.
+										finding suitable substitution candidates, and replacing words iteratively in the text.
 									</i>
 									</p>
 
@@ -80,7 +80,7 @@
 
 									<p>I will implement a custom LS approach shown in the diagram below. To summarize, we (1) perform named entity recognition
 										(NER), (2) find complex words in the sentence, (3) find candidate words for substitution, (4) determine the best fit
-										among the candidates, and (5) replace the word in the sentence. This occurs recursively, so a sentence with multiple
+										among the candidates, and (5) replace the word in the sentence. This occurs iteratively, so a sentence with multiple
 										complex words will be simplified word-by-word. I include the additional step of NER so that named entities are not
 										accidentally simplified, which would alter or destroy significant meaning of the sentence.
 									</p>
@@ -145,14 +145,69 @@ tokens_no_ner = list(set(tokens) - set(tokens_ner)) # get all tokens that are NO
 										content are less likely to be known by a reader, and might be replaced with more frequently occurring words.
 									</p>
 
+									<h4>Building vocabulary datasets</h4>
 									<p>
-										Let's implement complex word identification using some custom-build data structures. For more
-										information on how I created these, see my supplementary page.
+										To implement my complex word identification scheme, I build two custom dictionaries for the HSK data and the
+										frequency data, respectively. I retreived .csv formatted HSK data from <a href="https://github.com/ivankra/hsk30"
+										 target="_blank">github</a> and vocab with frequency data from the Beijing Language and Culture University, with
+										 UTF-8 encoded versions collected <a href="https://www.plecoforums.com/threads/word-frequency-list-based-on-a-15-billion-character-corpus-bcc-blcu-chinese-corpus.5859/" 
+										 target="_blank">here</a>. From the BLCU data, I used the literature frequency list because the global list collected 
+										 from all corpus sources had some unusual results that might skew general content analysis, like "第" being the top most
+										 frequent character. 
+									</p>
+									<p>
+										With the data in hand, I formatted them as follows:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+### import packages
+import pandas as pd
+import numpy as np
+
+### formatting HSK level data
+HSK = pd.read_csv("hsk30.csv")
+HSK.index = HSK['Simplified']
+HSK.rename(columns={'Level':'level'}, inplace=True)
+HSK.drop(labels=['Simplified', 'Traditional', 'Pinyin', 'WebNo', 'ID', 'POS', 'WebPinyin', 'OCR', 'Variants', 'CEDICT'], axis=1, inplace=True)
+HSK.replace(to_replace='7-9', value='7', inplace=True)
+HSK['level'] = HSK['level'].astype(int)
+HSK_dict = HSK.to_dict()['level']	
+
+### formatting frequency data
+blcu = pd.read_csv('literature_wordfreq.release_UTF-8.txt', header = None, sep="\t",)
+blcu.rename(columns={0:"character", 1:"frequency"}, inplace=True)
+blcu.set_index("character", inplace=True)
+blcu["frequency"] = blcu["frequency"].rank(pct=True)
+									</code></pre>
+
+									<p>
+										The resulting data structures look like this:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+HSK_dict: {'爱': 1, '爱好': 1, '八': 1, '爸爸|爸': 1, '吧': 1, '白': 3, ... }
+
+blcu.head():
+           frequency
+character           
+的           1.000000
+了           0.999997
+是           0.999994
+我           0.999992
+在           0.999989
+									</code></pre>
+									<p>
+										HSK_dict has character keys and HSK level values, while
+										the BLCU data is a Pandas DataFrame with character index and a ranked frequency column. 
+									</p>
+									<h4>Using the datasets for complex word identification</h4>
+									<p>
+										Let's implement complex word identification using my new data structures:
 									</p>
 
 									<pre class="language-py" style="text-align: left"><code class="language-py">
 def find_complex_words(tokens: list, HSK_thresh:int, freq_thresh:float):
-	complex_HSK = [token for token in tokens if (token in hsk_dict and hsk_dict[token]&gt;HSK_thresh)] # find all tokens above HSK level
+	complex_HSK = [token for token in tokens if (token in HSK_dict and HSK_dict[token]&gt;HSK_thresh)] # find all tokens above HSK level
 	complex_freq = [token for token in tokens if (token in blcu.index and blcu.loc[token].values[0]&lt;freq_thresh)] # find all tokens below freq level
 	complex_words = list(set(complex_HSK).union(complex_freq)) # combine by union
 	return complex_words
@@ -160,43 +215,106 @@ def find_complex_words(tokens: list, HSK_thresh:int, freq_thresh:float):
 complex_words = find_complex_words(tokens_no_ner, HSK_thresh=5, freq_thresh=0.98)
 									</code></pre>
 
-									<h3>Step 3: Finding substitution candidates</h3>
+									<h3>Steps 3 and 4: Finding and ranking substitution candidates</h3>
 									<p>
-										Using our custom dictionary, it is easy to find candidate words by getting the dictionary
-										values for each token key. However, we want to double check the list of similar words: we 
-										don't want to replace a high-frequency word with a word that has a much lower frequency, as 
-										it is less likely to be known, even if it might be a perfect synonym for the complex word!
+										To find potential substitution candidates, let's apply a standard NLP technique of
+										creating word embeddings for each word in our BLCU vocabulary, and calculating the cosine
+										similarity between each word and every other word. The words with the highest corresponding
+										cosine similarity will likely be the best candidates! For this task, I only look at the top
+										50000 most-frequent characters, as the memory requirement to cross-compute larger than a 50000x50000
+										size matrix became too unreasonable.
 									</p>
+									
 									<pre class="language-py" style="text-align: left"><code class="language-py">
-freq_difference = 0.99
+### import statements
+import torch
+from sentence_transformers import SentenceTransformer
+model = SentenceTransformer('BAAI/bge-large-zh-v1.5') # this will be our word embedding model
 
-for word in complex_words:
-	candidates = similarity_dict[word] # use our dictionary to find similar words
-	# remove candidates with lower frequency than the original word:
-	word_freq = blcu.loc[word].values[0]
+### calculate similarity of embeddings
+vocab = list(blcu.iloc[:50000].index) # only take top 50,000 most frequent words
+embeddings = model.encode(vocab) # create embeddings of each word
+similarity_t = model.similarity(vocab, vocab) # calculate similarity -> requires lots of memory!
+
+### sort by similarity value, get top 15 results
+top_similar = torch.flip(np.argsort(similarity_t, axis=1)[:,-16:-1], dims=(1,)).numpy().tolist()										
+									</code></pre>
+									<p>
+										One last step. It's important that the <b>part of speech (POS)</b> tag of a candidate substitution
+										matches the original complex word. We don't want to replace a noun with a verb! I use the Chinese
+										package 'thulac' to get the POS tags of the top similar words and filter out nonmatching tags. I 
+										also add a frequency-based filter for the list of similar words -- I also don't want to replace a 
+										complex word with an even more complex one, even if it is a great synonym! 
+									</p>
+										
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+import thulac   
+thu1 = thulac.thulac()
+
+similarity_dict = {}
+for idx in range(len(top_similar)):
+	base_word = blcu.iloc[idx,0] # get the original word
+	base_freq = blcu.iloc[idx,0].values[0] # get the original word frequency rank
+	freq_difference = 0.99 # hyperparameter for the max freq difference between original, similar words
+	top_list = list(blcu.iloc[top_similar[idx],0]) # get the similar words
+	base_flag = thu1.cut(base_word)[0][1] # original word flag
+	idx_list = []
+
+	for word in top_list:
+		sim_flag = thu1.cut(word)[0][1]  # POS tagging with thulac
+		sim_freq = blcu.loc[word].values[0] # get similar word freq
+
+		if sim_flag==flag and cand_freq &lt; word_freq*freq_difference: 
+			idx_list.append(word) # only add matching POS words with high freq to dict
+
+	similarity_dict[base_word] = idx_list
+									</code></pre>
+									<p>
+										The result is a dict with Chinese word keys, with the value being a list of the top most-similar
+										words.
+									</p>
+									
+									<h3>Step 5: Replacing words iteratively</h3>
+									<p>
+										Although our potential candidate substitutions have been identified and are already ranked by
+										their cosine similarity to the complex word, let's also verify that they are a good fit within
+										the original sentence context! To do so, we can replace the word with the candidate in the 
+										sentence and compute the cosine similarity between the new and original sentence. 
+										The candidate sentence with the highest cosine similarity is probably going to be the best fit, and we can
+										replace the original sentence with this candidate.
+									</p>
+									<p>
+										I make this an iterative process, so that if there are multiple complex words in a sentence, replacement occurs
+										word-by-word:
+									</p>
+
+									<pre class="language-py"><code class="language-py">				
+def choose_and_replace(sentence: str, word: str, candidates: list):
+	embed_orig = model.encode(sentence) # get original embedding
+	similarity = []
 	for candidate in candidates:
-		cand_freq = blcu.loc[candidate].values[0]
-		if cand_freq &lt; word_freq*freq_difference:
-			candidates.remove(candidate)
+		new_sentence = sentence.replace(word, candidate) # new sentence with word replaced
+		embed_new = model.encode(new_sentence) # create embeddings
+		similarity.append(np.float32(model.similarity(embed_orig, embed_new)[0][0])) # calculate similarity
+
+	best_idx = int(np.argmax(similarity))
+	sentence = sentence.replace(word, candidates[best_idx])
+	return sentence
+
+simple_sentence = sentence # start with the original sentence
+for word in complex_words: # iterative process
+	candidates = similarity_dict[word]
+	simple_sentence = choose_and_replace(simple_sentence, word, candidates) # build our new replaced sentence
 									</code></pre>
 
-									<h3>Step 4: Ranking substitution candidates</h3>
-									<p>
-										Once potential candidate substitutions have been identified, we can rank them
-										by replacing the word with the candidate in the sentence and computing the cosine
-										similarity between the new and original sentence. The candidate with the highest
-										cosine similarity is probably going to be the best fit!
+									<h3>Conclusion</h3>
+									<p>The output 'simple_sentence' is our new, lexically-simplified result! Let's try
+										the code out on an example complex sentence, and see the outputs at each step:
 									</p>
 
-									<h3>Step 5: Replacing words recursively</h3>
-									<p>
-										This part of the blog is under construction! To summarize, I perform the above substitution
-										and replacement process for each complex word originally identified. I do this recursively, so
-										the next complex word is being substituted in the sentence with the previous complex word already
-										replaced. This should increase the overall fluency of the final sentence at the risk of changing the
-										overall sentence meaning.
-									</p>
-									<h3>Conclusion</h3>
+									<p>(this part under construction!)</p>
+
+									<!-- verbose example here! -->
 									<p>
 										That concludes Part 2 of this project -- a LS pipeline using NLP tools! See the future Part 4 for the
 										evaluation of the pipeline on my validation and test data. But for now, let's look at a different approach
