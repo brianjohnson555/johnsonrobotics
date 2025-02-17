@@ -61,8 +61,59 @@
 
 									</div>
 
+									<h3>Part 3 Summary</h3>
+									<p><i>I describe my process of fine-tuning and applying a Chinese language BART model to 
+										achieve generalized text simplification.
+									</i></p>
+
 									<h3>Fine-tuning a BART model for sentence-level text simplification</h3>
-									<p>This part of the blog is under construction!
+									<p>
+										<b>Bidirectional and Auto-Regressive Transformer (BART)</b> is a sequence-to-sequence model proposed by Lewis et al. <a href="#lewis2019">[1]</a> which uses 
+										an encoder and decoder for NLP tasks. For some in-depth explanations, check out these
+										resources for <a href="https://medium.com/analytics-vidhya/encoder-decoder-seq2seq-models-clearly-explained-c34186fbf49b" target="_blank">sequence-to-sequence models</a>, 
+										<a href="https://huggingface.co/blog/bert-101" target="_blank">BERT</a>, and 
+										<a href="https://www.analyticsvidhya.com/blog/2024/11/bart-model/" target="_blank">BART</a>.
+										I will be fine-tuning an existing BART model for a sequence generation task: generating
+										a simplified Chinese sentence based on a complex sentence input!
+									</p>
+
+									<div class="container">
+										<a class="image centered"><img src="../images/project_TS/bart_lewis_2019.PNG" style="width:60%;"/></a>
+										<figcaption>BART model as explained in Lewis et al. <a href="#lewis2019">[1]</a></figcation>
+									</div>
+
+									<p>
+										Fine-tuning BART for text simplification tasks has been demonstrated in English <a href="#sun2023">[2]</a> as well as
+										Chinese <a href="#chong2023">[3]</a> and has shown performance better than large language models like GPT 3.5
+										when properly fine-tuned. I will be using a BART model trained on Chinese language data, <b>CPT/Chinese BART</b>,
+										available on HuggingFace: <a href="https://huggingface.co/fnlp/bart-base-chinese", target="_blank">https://huggingface.co/fnlp/bart-base-chinese</a>.
+										The model was implemented from the architecture described in Shao et al. <a href="#shao2021">[4]</a>
+									</p>
+
+									<p>Since Chinese BART is already trained for text generation, let's see what the model outputs from a sample
+										complex sentence:
+									</p>
+
+									
+
+									<h4>Data for fine-tuning</h4>
+
+									<h4>References</h4>
+									<p style="font-size:12pt"><a id="lewis2019" style="color: inherit; text-decoration: none;">[1] Lewis et al., "BART: Denoising Sequence-to-Sequence Pre-training 
+										for Natural Language Generation, Translation, and Comprehension," 
+										<a href="https://doi.org/10.48550/arXiv.1910.13461" target="_blank">https://doi.org/10.48550/arXiv.1910.13461</a> (2019)</a> 
+									</p>
+									<p style="font-size:12pt"><a id="sun2023" style="color: inherit; text-decoration: none;">[2] Sun et al., "Teaching the Pre-trained Model to 
+										Generate Simple Texts for Text Simplification," 
+										<a href="https://doi.org/10.48550/arXiv.2305.12463" target="_blank">https://doi.org/10.48550/arXiv.2305.12463</a> (2023)</a> 
+									</p>
+									<p style="font-size:12pt"><a id="chong2023" style="color: inherit; text-decoration: none;">[3] Chong et al., "MCTS: A Multi-Reference 
+										Chinese Text Simplification Dataset," 
+										<a href="https://doi.org/10.48550/arXiv.2306.02796" target="_blank">https://doi.org/10.48550/arXiv.2306.02796</a> (2023)</a> 
+									</p>
+									<p style="font-size:12pt"><a id="shao2021" style="color: inherit; text-decoration: none;">[4] Shao et al., "CPT: A Pre-Trained Unbalanced
+										 Transformer for Both Chinese Language Understanding and Generation," 
+										<a href="https://doi.org/10.48550/arXiv.2109.05729" target="_blank">https://doi.org/10.48550/arXiv.2109.05729</a> (2021)</a> 
 									</p>
 								</article>
 

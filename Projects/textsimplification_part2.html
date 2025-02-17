@@ -253,9 +253,9 @@ thu1 = thulac.thulac()
 
 similarity_dict = {}
 for idx in range(len(top_similar)):
+	freq_difference = 0.99 # hyperparameter for the max freq difference between original, similar words
 	base_word = blcu.iloc[idx,0] # get the original word
 	base_freq = blcu.iloc[idx,0].values[0] # get the original word frequency rank
-	freq_difference = 0.99 # hyperparameter for the max freq difference between original, similar words
 	top_list = list(blcu.iloc[top_similar[idx],0]) # get the similar words
 	base_flag = thu1.cut(base_word)[0][1] # original word flag
 	idx_list = []
@@ -264,7 +264,7 @@ for idx in range(len(top_similar)):
 		sim_flag = thu1.cut(word)[0][1]  # POS tagging with thulac
 		sim_freq = blcu.loc[word].values[0] # get similar word freq
 
-		if sim_flag==flag and cand_freq &lt; word_freq*freq_difference: 
+		if sim_flag==flag and sim_freq &lt; word_freq*freq_difference: 
 			idx_list.append(word) # only add matching POS words with high freq to dict
 
 	similarity_dict[base_word] = idx_list
@@ -308,22 +308,25 @@ for word in complex_words: # iterative process
 									</code></pre>
 
 									<h3>Conclusion</h3>
-									<p>The output 'simple_sentence' is our new, lexically-simplified result! Let's try
-										the code out on an example complex sentence, and see the outputs at each step:
+									<p>The output 'simple_sentence' is our new, lexically-simplified result! Let's look at an example sentence
+										and see how our pipeline simplifies the output:
 									</p>
 
-									<p>(this part under construction!)</p>
+									<div class="container">
+										<a class="image centered"><img src="../images/project_TS/ls_demo.PNG" style="width:85%;"/></a>
+										<figcaption>Lexical simplification using my pipeline.</figcation>
+									</div>
 
-									<!-- verbose example here! -->
 									<p>
-										That concludes Part 2 of this project -- a LS pipeline using NLP tools! See the future Part 4 for the
-										evaluation of the pipeline on my validation and test data. But for now, let's look at a different approach
-										for Part 3: implementing complete sentence simplification by fine-tuning BART.
+										That concludes Part 2 of this project -- a LS pipeline using NLP tools! Of course, we will need to evaluate
+										the performace of this pipeline - see the future Part 4 page for details. But for now, let's look at an alternative approach
+										to simplification: using a fine-tuned BART model.
 									</p>
 
-									<a href="../Projects/textsimplification_part3" style="font-size:20px;"><p style="text-align: center;">Continued in Part 3...</p></a>
-
-									<p><a id="thanyyan2021" style="color: inherit; text-decoration: none;">[1] Al-Thanyyan et al., "Automated Text Simplification: A Survey," <i>ACM Computing Surveys</i>, <b>52</b>, 2, 
+									<a href="../Projects/textsimplification_part3.html" style="font-size:20px; font-weight:bold;"><p style="text-align: center;">Continued in Part 3...</p></a>
+									
+									<h4>References</h4>
+									<p style="font-size:12pt"><a id="thanyyan2021" style="color: inherit; text-decoration: none;">[1] Al-Thanyyan et al., "Automated Text Simplification: A Survey," <i>ACM Computing Surveys</i>, <b>52</b>, 2, 
 										<a href="https://doi.org/10.1145/3442695" target="_blank">https://doi.org/10.1145/3442695</a> (2024)</a> 
 									</p>
 								</article>
