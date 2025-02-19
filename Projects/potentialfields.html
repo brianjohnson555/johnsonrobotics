@@ -8,7 +8,7 @@
 		<title>Brian Johnson Robotics</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="assets/css/main.css" />
+		<link rel="stylesheet" href="../assets/css/main.css" />
 	</head>
 	<body class="is-preload no-sidebar">
 		<div id="page-wrapper">
@@ -19,23 +19,16 @@
 
 					<!-- Logo -->
 						<div id="logo">
-							<h1><a href="index.html">Brian Johnson, Ph.D.</a></h1>
+							<h1><a href="../index.html">Brian Johnson, Ph.D.</a></h1>
 						</div>
 
 					<!-- Nav -->
 						<nav id="nav">
 							<ul>
-								<!-- <li><a href="index.html">Home</a></li> -->
-								<li class="current">
-									<a href="projects.html">My Projects</a>
-									<ul>
-										<li><a href="sTISSUE.html">Soft robotic shape display</a></li>
-										<li><a href="APF.html">Potential field control algorithm</a></li>
-										<li><a href="#">6-DOF manipulator simulation</a></li>
-									</ul>
-								</li>
-								<li><a href="publications.html">Publications</a></li>
-								<li><a href="resume.html">Resume and Contact</a></li>
+								<li><a href="../index.html">Home</a></li>
+								<li class="current"><a href="../projects.html">Projects</a></li>
+								<li><a href="../publications.html">Publications</a></li>
+								<li><a href="../resume.html">Resume and Contact</a></li>
 							</ul>
 						</nav>
 
@@ -44,75 +37,242 @@
 
 			<!-- Main -->
 				<div id="main-wrapper">
-					<div class="container">
+					<div class="container blog">
 						<div id="content">
 
 							<!-- Content -->
 								<article>
+									
+									<h2>An artificial potential field approach for velocity 
+										control and object manipulation on shape displays</h2>
 
-									<h2>Artificial potential fields for velocity control and object manipulation</h2>
+									<h3>Summary</h3>
+									<p><i>
+										Shape displays, devices which can actively alter their surface topology, 
+										have promising applications for human-robot-collaboration, haptic interaction, and manufacturing. 
+										However, these use-cases are limited due to challenges in dynamic object control on 
+										the display surface. In this project, I create a general-purpose, extendable algorithm that 
+										enables complete trajectory control of spherical objects via surface rolling.  
+										The algorithm can also enable the control of multiple agents on separate trajectories 
+										with object avoidance, as well as cooperative formation control. 
+										On this project page, I'll describe the algorithm and show experiments that validate its performance.
+									</i></p>
 
-									<p>This project was a follow-up to my work on the soft shape display (see <a href="sTISSUE.html">here</a> for more). 
-										My goal was to improve the control and object manipulation capabilities of our shape display through an 
-										approach of artificial potential fields. The video below gives an overview of the control method and results:
+									<p style="text-align: center"><a href = "../APF_manuscript_BrianJohnson.pdf" target="_blank" rel="noopener noreferrer">
+										Read my pre-print manuscript for full details, equations, and literature references.</a>
 									</p>
 
-									<row class="aln-center"><iframe width="560" height="315" src = "https://www.youtube.com/embed/HUeL6-QKedM?si=gEKkTzDBK0M_jG8g" title="YouTube video player" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></row>
+									<h3>Project introduction</h3>
+									<p>
+										This work is an off-shoot of the paper that <a href = "https://doi.org/10.1038/s41467-023-39842-2" target="_blank" rel="noopener noreferrer">
+										my coauthors and I published in Nature Communications</a>. In that work, we built a soft
+										robotic shape display with a variety of capabilities. A shape display is a device which can change
+										its surface topology using controlled and targeted actuation to different areas of the surface. One 
+										of the demonstrations that I implemented in that project was a closed-loop object manipulation scheme
+										that could make balls roll around on the surface. While a little bit silly, this application could have 
+										valid uses in manufacturing and user-interactivity if improved upon.
+									</p>
+
+									<p>My goal is to implement an improved algorithm to control ball motion using the inherent actuation
+										properties of our robotic device. I selected a gradient descent (potential field) approach, as this has 
+										been successfully applied in many other robotic navigation systems.
+									</p>
+
+									<h3>Gradient descent algorithm</h3>
+									<p>
+										The gradient descent approach is relatively simple. The 'gradient' that the object will follow on any 
+										given topology is the height gradient -- it's a direct relationship to the gravitational potential energy
+										of the system. Motion is created by the conversion from potential to kinetic energy, and the direction of
+										motion will likewise follow the potential energy gradient.
+									</p>
 
 									<p>
+										In basic terms, my approach is to create a 'hill' for a ball to roll down. The position of the hill relative
+										to the ball will determine (a) the amount of energy and therefore the speed that the ball will obtain after
+										rolling down the hill, and (b) the direction in which the ball will roll.
+									</p>
+
+									<div class="container">
+										<a class="image centered"><img src="../images/project_APF/fig_algorithm.jpg" style="width:85%;"/></a>
+										<figcaption>Outline of the algorithm. (a) Measure object velocity, 
+											(b) Calculate required surface topology, (c) calculate topology position on the device,
+										(d) downscale to the device actuator resolution, (e) apply actuation commands, (f) measure new velocity. </figcation>
+									</div>
+
+									<p>
+										The algorithm can be considered a closed-loop control system, where the velocity (both magnitude and direction)
+										is the state vector that is actively measured and controlled.
+									</p>
+
+									<div class="container">
+										<a class="image centered"><img src="../images/project_APF/code_algo.PNG" style="width:40%;"/></a>
+										<figcaption>Pseudo-code representation of the control algorithm. The equations
+											referenced are described in detail <a href = "../APF_manuscript_BrianJohnson.pdf" target="_blank" rel="noopener noreferrer">
+												in my pre-print manuscript</a>.
+										</figcation>
+									</div>
+
+									<p>
+										The base algorithm of this control method allows me to control the position of a ball on the surface.
+										However, the algorithm can also extend to a few other capabilities:
+									</p>
+									<ul>
+										<li>Controlling the entire trajectory via velocity rather than location</li>
+										<li>Avoiding obstacles while moving</li>
+										<li>Controlling multiple agents at the same time</li>
+										<li>Controlling a geometric formation of several agents</li>
+									</ul>
+
+									<h3>Results</h3>
+									<p>
+										Before jumping into the performance of the algorithm, here is a brief overview of the hardware I used
+										for this project, from my previous <a href = "https://doi.org/10.1038/s41467-023-39842-2" target="_blank" rel="noopener noreferrer">
+											shape display paper</a>:
+									</p>
+
+									<div class="container">
+										<a class="image centered"><img src="../images/project_APF/fig_hardware.jpg" style="width:55%;"/></a>
+										<figcaption>Hardware and control loop for my experiments. (a) The robotic shape display device consists of
+											a 10x10 actuator array with embedded sensors, as well as an overhead camera for object position
+											measurement. (b) The closed-loop system operates on the software/sensor-side at 260 Hz, while the
+											physical actuation system is updated at a 26 Hz rate. The main measurement is the ball position from
+											which I derive an estimate of ball velocity.
+										</figcation>
+									</div>
+
+									<p>For a full description of the robot, check out the Nature Communications paper linked above. To summarize,
+										the device is a 10x10 actuator array with an elastic surface skin. Each actuator has a 60x60 mm footprint,
+										an upwards maximum displacement of about 15 mm, and an output force of a few Newtons. I use an overhead USB
+										camera to image the display surface, and OpenCV object detection to find the position of a ball on the surface
+										using the captured image. I use the ball position to derive velocity, and run through the control algorithm
+										described early on this page.
 									</p>
 
 									<p>
+										With the above set up and control scheme, let's look at real-time video of some of the capabilities:
 									</p>
 
-									<h3>Potential field method</h3>
+									<div class="container" style="align-content:center">
+										<iframe width="560" 
+										height="315" 
+										style="display:block; margin: auto;"
+										src = "https://www.youtube.com/embed/HUeL6-QKedM?si=gEKkTzDBK0M_jG8g"
+										title="YouTube video player 2" 
+										frameborder="0" 
+										allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+										referrerpolicy="strict-origin-when-cross-origin" 
+										allowfullscreen>
+										</iframe>
+									</div>
 
-									<p>This content is under construction!</p>
+									<p>
+										You can see that the real-time performance is pretty good! The motion of the ball is rapid
+										and well-controlled by the active robotic surface. Here's a more in-depth look at the results
+										of three demonstrations:
+									</p>
 
+									<div class="container">
+										<a class="image centered"><img src="../images/project_APF/fig_results.jpg" style="width:85%;"/></a>
+										<figcaption>Results of 10 trials of each experiment: (a) positional control of the ball from one corner to
+											another, (b) positional control with an obstacle, (c) trajectory control in a circle using a limit cycle.
+											The middle figures show the trajectories of the trials, with the small inlay describing the velocity field
+											used for the control scheme. The bottom figures show the normalized velocity error over time.
+										</figcation>
+									</div>
+
+									<p>
+										You can see in (a) that it requires less than 2 seconds to travel about 50 cm, representing rapid object manipulation.
+										The trajectory of the ball is very consistent over 10 trials, showing good controllability and minimal overshoot. Similar results
+										can be seen for the demonstration in (b), although there is significant overshoot for the limit cycle controller in (c) which
+										results in the oscillatory and messy trajectory that you can see there.
+									</p>
+
+									<div class="container">
+										<a class="image centered"><img src="../images/project_APF/fig_triangle.jpg" style="width:85%;"/></a>
+										<figcaption>Formation control of 3 balls, with the ideal formation being an equilateral triangle. Dashed lines
+											indicate the ideal formation state.
+											(a) The target formation is achieved in about 2.5 seconds, and the (b) side lengths and (c) area of the triangle
+											formed between the balls verify that the correct formation is achieved and stabilized in the Lyapunov sense.
+										</figcation>
+									</div>
+
+									<p>
+										The results of formation control are also promising. Here, you can see that the agents in the formation can achieve 
+										the target formation and maintain it, albeit with some similar oscillatory effects like those seen in the limit cycle
+										demonstration. 
+									</p>
+
+									<h3>Future work and conclusion</h3>
+									<p>
+										The video and figure results that I've shared show that the initial performance of this gradient
+										descent/potential field control algorithm are already quite impressive - I can achieve object speeds reaching
+										50 cm/s across the surface, acceleration from rest of less than 0.5 s, high positional accuracy, and the ability to
+										avoid obstacles, follow trajectories, and form multi-agent formations.
+									</p>
+									<p>
+										Of course, there are still areas where I can make improvements. In the algorithm itself, I can consider more complex
+										forces like sliding and rolling friction against the robot surface, which I largely ignored here. I can also fine-tune the
+										algorithm hyperparameters to achieve better results for this particular robot and object, even though the mathematics of the
+										algorithm itself are hardware-agnostic. I could also improve the real-time performance by increasing the control
+										frequency rate -- using a higher fps camera for imaging, and increasing the control loop frequencies for actuation.
+									</p>
+									<p>
+										I hope you've enjoyed this quick introduction and summary of this gradient descent control project. I had a lot
+										of fun implementing it and hope it can provide inspiration for your own robotics projects!
+									</p>
 								</article>
 
 						</div>
 					</div>
+				<!-- Features -->
+				<div id="features-wrapper">
+					<div class="container">
+						<div class="row">
+						</div>
+					</div>
+				</div>
 				</div>
 
-				<!-- Footer -->
-				<div id="footer-wrapper">
-					<footer id="footer" class="container">
-						<div class="row">
-							<div class="col-3 col-6-medium col-12-small">
+				
 
-								<!-- Contact -->
-									<section class="widget contact">
-										<h3>Contact Me</h3>
-										<p><a href="https://www.linkedin.com/in/brian-johnson-a36651ab" target="_blank">Message me on LinkedIn</a>
-											<a href="mailto: johnsonrobotics24@gmail.com">johnsonrobotics24@gmail.com</a><br />
-											+49-1516-856-8116</p>
-									</section>
-
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-12">
-								<div id="copyright">
-									<ul class="menu">
-										<li>Brian K. Johnson 2024</li><li>Designed from <a href="http://html5up.net">HTML5 UP</a></li>
-									</ul>
-								</div>
-							</div>
-						</div>
-					</footer>
+<!-- Footer -->
+<div id="footer-wrapper">
+	<footer id="footer" class="container">
+		<div class="row">
+			<div class="col-12 col-12-small">
+				<div id="contact">
+					<h3>Contact</h3>
+					<p style="font-size: 18px;">
+						<a href="https://www.linkedin.com/in/brian-johnson-a36651ab" target="_blank">Message me on LinkedIn</a><br>
+						<a href="mailto: johnsonrobotics24@gmail.com"> johnsonrobotics24@gmail.com</a><br>
+						+1-708-621-1336</p>
+					<a href="../resume_brian_johnson.pdf" download target="_blank" rel="noopener noreferrer" class="button icon solid fa-download">Download resume</a>
+				</div>
+			</div>
+			
+		</div>
+		<div class="row">
+			<div class="col-12">
+				<div id="copyright">
+					<ul class="menu">
+						<li>Brian K. Johnson 2024</li><li>Designed from <a href="http://html5up.net" target="_blank" rel="noopener noreferrer">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</footer>
 				</div>
 
 		</div>
 
 		<!-- Scripts -->
 
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/jquery.dropotron.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
+			<script src="../assets/js/jquery.min.js"></script>
+			<script src="../assets/js/jquery.dropotron.min.js"></script>
+			<script src="../assets/js/browser.min.js"></script>
+			<script src="../assets/js/breakpoints.min.js"></script>
+			<script src="../assets/js/util.js"></script>
+			<script src="../assets/js/main.js"></script>
 
 	</body>
 </html>
