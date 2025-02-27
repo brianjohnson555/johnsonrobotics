@@ -114,18 +114,15 @@
 										compared to other languages like English, so the MCTS dataset is one of the best options available.
 									</p>
 
-									<h4>Fine-tuning Chinese BART</h4>
+									<h4>Preprocessing and tokenizing data</h4>
 									<p>Since our BART model is prepared on HuggingFace, we can use the HuggingFace transformers
-										package and framework for our fine-tuning. Let's start by preparing our data. Rather than 
-										input the MCTS data directly into the tokenizer, I want to add tag the sentence pairs with
-										some custom tokens for HSK vocabulary.
+										package and framework for our fine-tuning. Let's start by preparing our data. An important feature
+										to note in Chinese BART is that Chinese text does not contain spaces separating words, but the BART
+										tokenizer is expecting this -- so let's add spaces between words in each sentence with jieba:
 									</p>
 
 									<!--TODO: add discussion of HSK distribution here-->
-									
-									<p>Let's start by importing some base packages, loading our model, tokenizer, and
-										the HSK vocabulary dataset that I processed in Part 2:
-									</p>
+
 									<pre class="language-py"><code class="language-py">
 import numpy as np
 import jieba
@@ -137,37 +134,21 @@ from transformers import BertTokenizer, BartForConditionalGeneration
 tokenizer = BertTokenizer.from_pretrained("fnlp/bart-base-chinese")
 model = BartForConditionalGeneration.from_pretrained("fnlp/bart-base-chinese")
 
-with open("HSK_levels.pickle", 'rb') as handle:
-	HSK_dict = pickle.load(handle)
-									</code></pre>
-
-									<p>
-										Now define our preprocessing function to add HSK tokens for HSK levels 4, 5, 6, and 7-9:
-									</p>
-
-									<pre class="language-py"><code class="language-py">	
-def tokenize_with_HSK(sentence, HSK_dict):
-    split_sentence = jieba.lcut(sentence)
-    HSK_sentence = ""
-    for word in split_sentence:
-        score = HSK_dict.get(word, 0)
-        if score>3:
-            HSK_sentence += f"{word}[{score}]"
-        else:
-            HSK_sentence += f"{word}"
-    return HSK_sentence
-
-tokenizer.add_tokens(["[4]", "[5]", "[6]", "[7]"])
-model.resize_token_embeddings(len(tokenizer))
-
+def pre_tokenize(sentence):
+    return " ".join(jieba.lcut(sentence)) # add spaces to sentence for tokenizer
+	
 def preprocess_data(filename: str, start: int, stop: int):
-    lines_HSK = []
     with open(filename, encoding="utf8") as f:
         lines_orig = f.read().splitlines()
-        for line in lines_orig[start:stop]:
-            lines_HSK.append(tokenize_with_HSK(line, HSK_dict))
-    return lines_HSK
+    return [pre_tokenize(line) for line in lines_orig]
 									</code></pre>
+
+									<p><i>
+										Aside: in a previous version of this pipeline, I also attempted to add HSK tokens for HSK levels
+										4, 5, 6, 7-9 to each corresponding word in the text. The idea behind this is to train BART to substitute
+										or remove higher-level HSK words with simpler words. However, the MCTS pseudo dataset does not contain 
+										enough lexical simplification between the input and target sentences for this method to be effective.
+									</i></p>
 
 									<p>
 										Now we can load the pseudo data <a href="https://arxiv.org/abs/2306.02796" target="_blank">
@@ -180,7 +161,7 @@ def preprocess_data(filename: str, start: int, stop: int):
 									<pre class="language-py"><code class="language-py">
 start = 0
 stop = 500000
-split = 400000
+split = 450000
 
 lines_complex = preprocess_data('zh_selected.ori', start, stop)
 lines_simple = preprocess_data('zh_selected.sim', start, stop)
@@ -197,11 +178,11 @@ ds_eval = Dataset.from_dict(data_dict)
 									</p>
 
 									<pre class="language"><code class="language">
-ds_train['complex'][0]: '75公斤级比赛3个项目[4]的第一名均为中国选手李顺柱获得[4]。'
-(The first place in all three events[4] of the 75 kg competition was won[4] by China's Li Shunzhu.)
+ds_train['complex'][0]: '75 公斤 级 比赛 3 个 项目 的 第一名 均 为 中国 选手 李顺柱 获得 。'
+(The first place in all three events of the 75 kg competition was won by China's Li Shunzhu.)
 
-ds_train['simple'][0]: '中国选手李顺珠在75公斤级三个项目[4]中获得[4]第一名。'
-(China's Li Shunzhu won[4] first place in three events[4] in the 75 kg category.)
+ds_train['simple'][0]: '中国 选手 李顺珠 在 75 公斤 级 三 个 项目 中 获得 第一名。'
+(China's Li Shunzhu won first place in three events in the 75 kg category.)
 									</code></pre>
 
 									<p>Now, tokenize the preprocessed data. Here I use a max_length of 128, with
@@ -223,38 +204,132 @@ def batch_tokenize_data(data):
 tokenized_data_train = ds_train.map(batch_tokenize_data, batched=True)
 tokenized_data_eval = ds_eval.map(batch_tokenize_data, batched=True)
 									</code></pre>
-									
+									<h4>Hyperparameter search using Optuna</h4>
 									<p>
-										Now, set up the trainer and begin model fine-tuning with trainer.train():
+										To fine-tune this BART model, I have to make some decisions about the training parameters
+										like batch size, learning rate, etc. The best way to determine optimal hyperparameters is to
+										use optimized tuners like Optuna, which can automatically search over your defined 
+										hyperparameter space. Let's perform tuning using the search space defined below:
 									</p>
 
 									<pre class="language-py"><code class="language-py">
+# optuna fine-tuning
+import optuna
+import torch
+
+def search_space(trial):
+	# Define hyperparameter search space
+	return {
+		"learning_rate": trial.suggest_float("learning_rate", 1e-5, 5e-4, log=True),
+		"per_device_train_batch_size": trial.suggest_categorical("per_device_train_batch_size", [4, 8, 16]),
+		"num_train_epochs": trial.suggest_int("num_train_epochs", 3, 10),
+		"weight_decay": trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
+	}
+
+# Define training arguments
+def model_init():
+	# Function to initialize the model for Trainer
+	from transformers import BartForConditionalGeneration
+	return BartForConditionalGeneration.from_pretrained("fnlp/bart-base-chinese", local_files_only=True)
+
+def compute_metrics(eval_preds):
+	prediction_tokens = eval_preds.predictions
+	prediction_text = [tokenizer.decode(tokens, skip_special_tokens=True) for tokens in prediction_tokens]
+
+	sari_score = sari.compute(
+			predictions=prediction_text, # model output
+			references=[[simple] for simple in tokenized_data_eval.select(range(5000))['simple']], # reference simple sentences
+			sources=tokenized_data_eval.select(range(5000))['complex'] # complex sentence
+		)
+	return {"sari": sari_score["sari"]}
+
+def preprocess_logits_for_metrics(logits, labels):
+		# This is a memory leak workaround to avoid storing too many tensors that are not needed
+		pred_ids = torch.argmax(logits[0], dim=-1)
+		return pred_ids
+
 training_args = TrainingArguments(
-    output_dir="./bart_simplification",
-    evaluation_strategy="epoch",
-    learning_rate=3e-5,
-    per_device_train_batch_size=128,
-    per_device_eval_batch_size=128,
-    eval_accumulation_steps = 1,
-    num_train_epochs=5,
-    weight_decay=0.01,
-    save_total_limit=2,
-    logging_steps=500
+	output_dir = "./bart_hypersearch",
+	eval_strategy = "epoch",
+	per_device_eval_batch_size = 1,
+	eval_accumulation_steps = 1, 
+	logging_dir = "./logs",
+	greater_is_better = True,
 )
 
 trainer = Trainer(
-    model = model,
-    args = training_args,
-    train_dataset = tokenized_data_train,
-    eval_dataset = tokenized_data_eval,
-    tokenizer = tokenizer
-)								
+	model_init=model_init,
+	args=training_args,
+	train_dataset=tokenized_data_train.select(range(15000)),  # Use a subset for quick tuning
+	eval_dataset=tokenized_data_eval.select(range(5000)),  
+	processing_class = tokenizer,
+	compute_metrics = compute_metrics,
+	preprocess_logits_for_metrics=preprocess_logits_for_metrics, # preprocesses before sending to compute_metrics()
+)
+
+# Run Optuna hyperparameter search
+best_trial = trainer.hyperparameter_search(
+	direction="maximize",  # For maximizing performance (adjust as needed)
+	hp_space=search_space,
+	n_trials=10  # Number of trials
+)
+
+print(best_trial)
+									</code></pre>
+
+									<p>
+										The hyperparameter search took an hour or two on an A100 GPU in Google Colab. Here were
+										the results of the best trial:
+									</p>
+
+									<pre class="language-py"><code class="language-py">
+BestRun(run_id='4', 
+		objective=33.830690227020675, 
+		hyperparameters={'learning_rate': 0.00010879820645860841, 
+						'per_device_train_batch_size': 128, 
+						'num_train_epochs': 9, 
+						'weight_decay': 0.001750272177978174}, 
+		run_summary=None)
+									</code></pre>
+
+									<h4>Fine-tuning BART with final parameters</h4>
+									
+									<p>
+										Now, set up the trainer using the final params and begin model fine-tuning with trainer.train():
+									</p>
+
+									<pre class="language-py"><code class="language-py">
+best_params = best_trial.hyperparameters
+training_args = TrainingArguments(
+	output_dir = "./bart_simplification",
+	eval_strategy = "epoch",
+	save_strategy = "epoch",
+	learning_rate = best_params["learning_rate"],
+	per_device_train_batch_size = best_params["per_device_train_batch_size"],
+	num_train_epochs = best_params["num_train_epochs"],
+	weight_decay = best_params["weight_decay"],
+	eval_accumulation_steps = 1,
+	per_device_eval_batch_size = 1,
+	logging_dir = "./logs",
+	logging_steps = 500,
+	greater_is_better = True, # maximize SARI
+)
+
+trainer = Trainer(
+	model = model,
+	args = training_args,
+	train_dataset = tokenized_data_train,
+	eval_dataset = tokenized_data_eval,
+	processing_class = tokenizer,
+	compute_metrics = compute_metrics,
+	preprocess_logits_for_metrics = preprocess_logits_for_metrics,
+)
 
 trainer.train()
 									</code></pre>
 
 									<p>
-										I used Google Colab with a A100 GPU to perform the training step. Let's look at the loss during training:
+										I used the same A100 GPU to perform the training step. Let's look at the loss during training:
 									</p>
 
 									<div class="container">
@@ -263,21 +338,21 @@ trainer.train()
 									</div>
 
 									<p>
-										Five epochs looks like a good stopping point, as the validation loss is leveling off and I 
-										want to avoid overfitting. Now that we have a trained model, let's try making a prediction on the same
-										example I showed earlier:
+										I did not train the full 9 epochs for two reasons: validation loss leveling out (avoid overfitting),
+										and high remaining runtime on the A100 GPU. The total training time was 5.5 hours.
+										Regardless, with the final fine-tuned model, we can make a sample prediction on our dataset:
 									</p>
 
 									<pre class="language-py"><code class="language-py">
 from transformers import Text2TextGenerationPipeline
 text2text_generator = Text2TextGenerationPipeline(model, tokenizer)
-output = text2text_generator(sentence, max_length=128, do_sample=False)[0]['generated_text'].replace(" ","")
+output = text2text_generator(sentence, max_length=128, do_sample=False)[0]['generated_text'].replace(" ","") # remove spaces for detokenization
 									</code></pre>
 									<pre class="language"><code class="language">
 Example ('complex'): '75公斤级比赛3个项目的第一名均为中国选手李顺柱获得。'
 (The first place in all three events of the 75 kg competition was won by China's Li Shunzhu.)
 
-Example ('simple'): '中国选手李顺珠在75公斤级三个项目[4]中获得[4]第一名。'
+Example ('simple'): '中国选手李顺珠在75公斤级三个项目中获得第一名。'
 (China's Li Shunzhu won first place in three events in the 75 kg category.)	
 
 Fine-tuned BART output: '75公斤级三个项目的第一名均由中国选手李顺柱获得。'
