@@ -1,0 +1,204 @@
+<!DOCTYPE HTML>
+<!--
+	Brian Johnson Robotics
+	Adapted from a template from html5up.net | @ajlkn (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Brian Johnson Robotics</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main.css" />
+		<link rel="shortcut icon" type="image/x-icon" href="../favicon.ico" />
+	</head>
+	<body class="is-preload no-sidebar">
+		<div id="page-wrapper">
+
+			<!-- Header -->
+			<div id="header-wrapper">
+				<header id="header" class="container">
+
+					<!-- Logo -->
+						<div id="logo">
+							<h1><a href="../index.html">Brian Johnson, Ph.D.</a></h1>
+						</div>
+
+					<!-- Nav -->
+						<nav id="nav">
+							<ul>
+								<li><a href="../index.html">Home</a></li>
+								<li class="current"><a href="../projects.html">Projects</a></li>
+								<li><a href="../publications.html">Publications</a></li>
+								<li><a href="../resume.html">Resume and Contact</a></li>
+							</ul>
+						</nav>
+
+				</header>
+			</div>
+
+			<!-- Main -->
+				<div id="main-wrapper">
+					<div class="container blog">
+						<div id="content">
+
+							<!-- Content -->
+								<article>
+									<div class="container">
+											<a class="image featured"><img src="../images/stock_jobs.jpeg" style="display:block; height:40%; width:30%; position:relative; margin-left: auto; margin-right: auto;"/></a>
+									</div>
+									
+									<h2>Building a resume-job matching service <br> (Part 1)</h2>
+									<p style="text-align: center;"><i>A personal project in web scraping, ML/NLP, and cloud deployment</i></p>
+									
+								<ul style="text-align: center; font-size:small">
+									<li class="button alt2"><a href="../Projects/jobsearch.html" style="color:inherit; text-decoration: none">Part 1: <br> Overview</a></li>
+									<li class="button alt"><a href="../Projects/jobsearch_part2.html" style="color:inherit; text-decoration: none">Part 2: <br> Web scraping</a></li>
+									<li class="button alt"><a href="../Projects/jobsearch_part3.html" style="color:inherit; text-decoration: none">Part 3: <br> Similarity search</a></li>
+									<li class="button alt"><a href="../Projects/jobsearch_part4.html" style="color:inherit; text-decoration: none">Part 4: <br> Deployment</a></li>
+								</ul>
+									
+									<h3>Part 1 Summary</h3>
+									<p><i>I introduce my project to implement a job search tool for job seekers which can automatically
+										find and match the best job postings that fit with your resume. I'm going to discuss the project 
+										outline and expected results.
+									</i>
+									</p>
+
+									<h3>The problem</h3>
+									<p>
+										After I returned to the United States from my postdoctoral studies at the Max
+										Planck Institute for Intelligent Systems, I faced both a job search and a lateral
+										career change, from academic research to applied industry work in data science and
+										machine learning. As one of the most popular job boards, <b>LinkedIn</b> quickly became my
+										regular homepage to find and apply for new job listings in my area.
+									</p>
+
+									<p>
+										I quickly found, however, that manually searching through job listings on LinkedIn is
+										not only time-consuming, but yields pretty poor results for jobs that match my experience
+										and interests. Take a look at the image below to see the typical LinkedIn job listing UI:
+									</p>
+
+									<div class="container">
+										<a class="image centered"><img src="../images/project_JS/jobsearch_img1.jpg" style="width:65%;"/></a>
+										<figcaption>The LinkedIn UI to search for jobs is inefficient and time-intensive.</figcation>
+									</div>
+
+									<p><b>There are several problems with the LinkedIn job search:</b></p>
+									<ul>
+										<li>Any given query can return 10s to 100s of results, which must be <i>manually reviewed</i></li>
+										<li>You can't view a job description until you click on the job card, <i>requiring time and effort</i></li>
+										<li>It takes valuable time to <i>skim through each description</i> to see if you meet the job requirements</li>
+										<li>Other information, like the post date, is <i>also obscured</i> in the job card</li>
+										<li>Query results <i>span multiple pages</i> that you have to click through</li>
+										<li>Results can be <i>littered with job board spam</i> (jobs reposted to orgs like Jobot)</li>
+										<li><i>Irrelevant jobs</i> appear in the results (e.g. positions like Manager, Lead, etc. which I'm not looking for)</li>
+									</ul>
+
+									<p>
+										Theoretically, some of the problems with the returned results can be resolved using Boolean search terms,
+										which some users claim work, but I have never been able to achieve this through the default LinkedIn search.
+									</p>
+
+									<h3>My approach</h3>
+									<p>
+										With all these problems in mind, I decided to create a job search and ranking app
+										that simulatenously solves three problems: <b>(1) reduce my time spent each day on job hunting,
+										(2) find highly relevant jobs to my skills and experience, and (3) serve as a learning tool for
+										my own professional development.</b>
+									</p>
+
+									<p>
+										The approach is relatively simple. First, create an automated web scraper that can extract all of the job
+										data (title, company, description, etc.) from a LinkedIn search query. Then, using the query results,
+										apply machine learning and NLP tools to rank the jobs in comparison to a (my) resume, returning the most
+										relevant jobs which I can than manually review and decide whether or not to apply for. Finally, to be
+										useful beyond my own purposes, deploy these systems on AWS so that they are scalable and interactable through
+										API calls.
+									</p>
+
+									<div class="container">
+										<a class="image centered"><img src="../images/project_JS/jobsearch_img2.JPG" style="width:75%;"/></a>
+										<figcaption>Overview of the project pipeline and components. The user
+											inputs their search query and resume, and the most relevant jobs are returned.
+										</figcation>
+									</div>
+
+									<h3>Project outline</h3>
+									<p>
+										As I described my approach to this project, my blog posts will also cover each
+										part in turn. I've outlined this blog into the following parts:
+									</p>
+									<ul>
+										<li>
+											Part 1: Project overview (you are here!)
+										</li>
+										<li>
+											Part 2: Creating and testing a web scraper for LinkedIn job postings.
+										</li>
+										<li>
+											Part 3: Using NLP and ML tools to match and rank jobs to a resume.
+										</li>
+										<li>
+											Part 4: Deploying my systems on AWS cloud for scalability.
+										</li>
+									</ul>
+
+									<a href="../Projects/jobsearch_part2.html" style="font-size:20px; font-weight:bold;"><p style="text-align: center;">Let's begin in part 2!</p></a>
+
+								</article>
+
+						</div>
+					</div>
+				<!-- Features -->
+				<div id="features-wrapper">
+					<div class="container">
+						<div class="row">
+						</div>
+					</div>
+				</div>
+				</div>
+
+				
+
+<!-- Footer -->
+<div id="footer-wrapper">
+	<footer id="footer" class="container">
+		<div class="row">
+			<div class="col-12 col-12-small">
+				<div id="contact">
+					<h3>Contact</h3>
+					<p style="font-size: 18px;">
+						<a href="https://www.linkedin.com/in/brian-johnson-a36651ab" target="_blank">Message me on LinkedIn</a><br>
+						<a href="mailto: johnsonrobotics24@gmail.com"> johnsonrobotics24@gmail.com</a><br>
+						+1-708-621-1336</p>
+					<a href="../resume_brian_johnson.pdf" download target="_blank" rel="noopener noreferrer" class="button icon solid fa-download">Download resume</a>
+				</div>
+			</div>
+			
+		</div>
+		<div class="row">
+			<div class="col-12">
+				<div id="copyright">
+					<ul class="menu">
+						<li>Brian K. Johnson 2024</li><li>Designed from <a href="http://html5up.net" target="_blank" rel="noopener noreferrer">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</footer>
+				</div>
+
+		</div>
+
+		<!-- Scripts -->
+
+			<script src="../assets/js/jquery.min.js"></script>
+			<script src="../assets/js/jquery.dropotron.min.js"></script>
+			<script src="../assets/js/browser.min.js"></script>
+			<script src="../assets/js/breakpoints.min.js"></script>
+			<script src="../assets/js/util.js"></script>
+			<script src="../assets/js/main.js"></script>
+
+	</body>
+</html>
