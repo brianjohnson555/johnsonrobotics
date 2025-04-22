@@ -1743,6 +1743,25 @@ h4 {
 			font-size: 2.25em;
 			padding: 0.8em 0.9em;
 		}
+		button.alt2,
+		.button.alt2 {
+			background: #cfcfcf;
+			background: rgba(0, 0, 0, 0.208);
+			color: #4a4a4a;
+		}
+			input[type="button"].alt2:active,
+				input[type="submit"].alt2:active,
+				input[type="reset"].alt2:active,
+				button.alt2:active,
+				.button.alt2:active {
+					background: #b7b7b7;
+					background: rgba(0, 0, 0, 0.521);
+				}
+			.button.alt:hover a {
+				display: block;
+  				width: 100%;
+  				height: 100%;
+				}
 
 /* List */
 

@@ -51,18 +51,15 @@
 									
 									<h2>Chinese Text Simplification for Reading Comprehension (Part 4)</h2>
 
-									<div class="container" style="text-align: center; margin-top:-1em; margin-bottom:2em; font-weight:bold; font-size:18px;">
-										<div class="row">
-											<div class="col-6 col-12-small">
-												<a href="../Projects/textsimplification_part3.html">(Back to Part 3)</a>
-											</div>
-											<div class="col-6 col-12-small">
-												<a href="../Projects/textsimplification_part5.html">(To Part 5)</a>
-											</div>	
-										</div>
-									</div>
+									<ul style="text-align: center; font-size:small">
+										<li class="button alt"><a href="../Projects/textsimplification.html" style="color:inherit; text-decoration: none">Part 1: <br> Overview</a></li>
+										<li class="button alt"><a href="../Projects/textsimplification_part2.html" style="color:inherit; text-decoration: none">Part 2: <br> Lexical simplification</a></li>
+										<li class="button alt"><a href="../Projects/textsimplification_part3.html" style="color:inherit; text-decoration: none">Part 3: <br> BART fine-tuning</a></li>
+										<li class="button alt2"><a href="../Projects/textsimplification_part4.html" style="color:inherit; text-decoration: none">Part 4: <br> Performance/analysis</a></li>
+									</ul>
+										
 
-									<h3>Summary</h3>
+									<h3>Part 4 Summary</h3>
 									<p><i>In this section, I will discuss the performance of my custom lexical simplification
 										pipeline, fine-tuned BART pipeline, and combination approaches. I also cover the NLP metrics
 										used to evaluate the performance on the MCTS dataset.
@@ -282,7 +279,7 @@ metric_LSBART = get_metrics_MCTS(simple_LSBART)
 									</p>
 
 									<div class="container">
-										<a class="image centered"><img src="../images/project_TS/mcts_results.PNG" style="width:65%;"/></a>
+										<a class="image centered"><img src="../images/project_TS/mcts_results.PNG" style="width:70%;"/></a>
 										<figcaption>Results of the validation set. Baseline refers to the performance of
 											the MCTS dataset on itself. Underlined values are the best value for that metric.</figcation>
 									</div>
