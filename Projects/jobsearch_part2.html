@@ -9,9 +9,11 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="../assets/css/main.css" />
+		<link rel="stylesheet" href="../assets/css/prism.css" />
 		<link rel="shortcut icon" type="image/x-icon" href="../favicon.ico" />
 	</head>
 	<body class="is-preload no-sidebar">
+		<script src="../assets/js/prism.js"></script>
 		<div id="page-wrapper">
 
 			<!-- Header -->
@@ -58,11 +60,289 @@
 								</ul>
 									
 									<h3>Part 2 Summary</h3>
-									<p><i>Work in progress!
+									<p><i>
+										I describe my implementation of a web scraper to retreive job details from a given
+										user query on linkedin.com, including best practices for navigating security and 
+										anti-scraping measures.
 									</i>
 									</p>
 
-									<a href="../Projects/jobsearch_part3.html" style="font-size:20px; font-weight:bold;"><p style="text-align: center;">To part 3</p></a>
+									<p>
+										Reminder, full project code can be found on 
+										<a href="https://github.com/brianjohnson555/job_matching_tools" style="font-weight:bold">my github repository</a>.
+									</p>
+
+									<h3>Basics of web scraping</h3>
+									<p>
+										As I discussed in the overview of this project (see Part 1), my first goal is to implement a 
+										web scraper that can retreive job listings from the LinkedIn job board for any given user query. 
+										Let's begin with the scraping basics, and later delve into how to navigate anti-scraping policies.
+										At its core, my web scraper will use the <code class="language-py">requests</code> package to 
+										send and receive requests from web pages, and <code class="language-py">BeautifulSoup</code> to
+										process the retrieved html:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+import requests
+from bs4 import BeautifulSoup
+
+response = requests.get(url, cookies=cookies, headers=headers, proxies=proxies, timeout=10)
+soup = BeautifulSoup(response.text, "html.parser")
+# do something here with soup to extract the data you want
+									</code></pre>
+
+									<p>
+										Obtaining the correct URL, headers, cookies, and setting appropriate proxies will
+										be the key to successful web scraping. Let's look at them in order.
+									</p>
+
+									<h4>Setting the URL</h4>
+									<p>
+										My web scraper uses 3 URLs: (1) the base page job search URL for LinkedIn, (2) the API
+										URL which retrieves more results after the base page, and (3) the individual URLs of each job
+										listing. The base page URL is accessed with:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+job_title = "Data scientist"
+location = "Chicago"
+post_time = 2.5
+base_url = ("https://www.linkedin.com/jobs/search?keywords"
+			f"={job_title}"
+			f"&location={location}"
+			f"&f_TPR=r{int(post_time*86400)}"
+			"&position=1&pageNum=0")
+									</code></pre>
+
+									<p>
+										Here, <code class="language-py">post_time</code> is a float that describes how far in days to look back,
+										but as you can see from the URL, LinkedIn actually provides second-level granularity 
+										(i.e. &f_TPR=r86400 returns jobs posted in the past 24 hours, &f_TPR=r10 returns jobs posted in the 
+										last 10 seconds). The base URL only shows the first page of job results, roughly 10-20; to return
+										more results, we need to call the LinkedIn API URL which would be activated in the user scrolled down the page
+										to load more results. By examining the network traffic on the base URL during scrolling, I found the API URL
+										to be the following:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+API_url = ("https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords="
+			f"{job_title}"
+			f"&location={location}"
+			f"&f_TPR=r{int(post_time*86400)}"
+			f"&start={start}")										
+									</code></pre>
+
+									<p>
+										With the job_title, location, and post_time the same as before, but with the <code class="language-py">start</code>
+										parameter an int describing the starting position of the retrieval (e.g. start=10 returns the job listing
+										starting from the 10th job of the search results). So by iterating through a changing <code class="language-py">start</code>
+										value, we can continually retrieve more and more job postings.
+									</p>
+
+									<p>
+										The third URL to retrieve is the URL of the job listing itself, which will be necessary to access in order to 
+										obtain the full job description. From the original LinkedIn search page, we can only retrieve the job cards with 
+										information like job title, company, and location. I'll go more in detail later about how to find the listing URL.
+									</p>
+
+									<h4>Getting cookies</h4>
+									<p>
+										Cookies are needed in order to access the API URL from the base page. I made a 
+										simple script to get cookies from the initial visit to the job search page:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+def get_fresh_cookies(base_url: str, user_agent: str):
+	session = requests.Session() # Create session to store cookies
+	headers = {"User-Agent": user_agent}
+
+	# Make request to url
+	response = session.get(base_url, headers=headers)
+	if response.status_code != 200:
+		return None # problem making the request
+
+	# Extract cookies
+	cookies = session.cookies.get_dict()
+	return cookies		
+
+from fake_useragent import UserAgent
+user_agent = UserAgent().random
+cookies = get_fresh_cookies(base_url, user_agent)
+									</code></pre>
+
+									<p>
+										Here, I use the UserAgent package to create a randomized user, mimicking a real browser,
+										which helps fool LinkedIn into thinking that the scraper is a real user. Here are some example
+										outputs from the UserAgent():
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+'Mozilla/5.0 (iPhone; CPU iPhone OS 18_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Mobile/15E148 Safari/604.1'
+'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Mobile Safari/537.36'
+'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
+									</code></pre>
+
+									<h4>Setting the headers</h4>
+									<p>
+										Now to access the LinkedIn job API, we can set the headers. One of the headers 
+										is the session ID, which we obtained from getting the cookies.
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+headers = {
+	"User-Agent": user_agent, # our random UserAgent
+	"Csrf-Token": cookies["JSESSIONID"],
+	"Referer": base_url, # base search URL
+	}
+									</code></pre>
+
+									<h4>Setting proxies to avoid detection</h4>
+									<p>
+										Setting proxies is an important part of detection avoidance; they obscure your real IP
+										and make the API believe it is being accessed from a different IP. For small amounts of web
+										scraping this is problably not needed, but making lots of requests in a short amount of time from
+										the same IP could result in your IP being blocked. I'm using 
+										<a href="https://iproyal.com/" target="_blank" style="font-weight:bold">IPRoyal</a> to obtain rotating
+										residential proxies: these are residential IPs that automatically change with each new access. So far,
+										I've found that with just 1 GB of bandwidth (about $2-3), I've been able to make a few
+										thousand LinkedIn requests, so the cost is very low for this application.
+									</p>
+									<p>
+										Your proxy provider will give you the proper proxy information; the format looked something like this:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+# proxy setup from IPRoyal
+proxy = 'geo.iproyal.com:(REDACT)'
+proxy_auth = '(REDACT):(REDACT)_country-us'
+proxies = {
+'http': f'socks5://{proxy_auth}@{proxy}',
+'https': f'socks5://{proxy_auth}@{proxy}'
+}
+									</code></pre>	
+
+									<h3>Putting it all together</h3>
+									<p>
+										To recap from above, I've found the proper URL formats to make LinkedIn job searches,
+										retreived cookies, headers, and set proxies, and now we can use <code class="language-py">request.get()</code>
+										to retrieve job data. I've also implemented a few features to avoid detection, namely:
+									</p>
+
+									<ul>
+										<li>Use a random UserAgent for each session</li>
+										<li>Use rotating residential proxies for each new API call (see below)</li>
+										<li>Also, add a random time interval between calls to avoid "robotic" user behavior.</li>
+									</ul>
+
+									<p>
+										Now to retrieve the job information itself. The scraping process really depends on the website you
+										access, but in the case of the LinkedIn jobs page, here's how it looks:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+response = requests.get(url, headers=headers, proxies=proxies, cookies=cookies, timeout=10) # make request from API URL
+soup = BeautifulSoup(response.text, "html.parser") # extract html
+job_cards = soup.find_all("div", class_="base-card") # this gets all the job cards
+
+if not job_cards: 
+	return None # no jobs found
+
+# Get job posting data from each posting:
+jobs = []
+for job in job_cards:
+	title_elem = job.find("h3", class_="base-search-card__title")
+	company_elem = job.find("h4", class_="base-search-card__subtitle")
+	location_elem = job.find("span", class_="job-search-card__location")
+	time_elem = job.find("time")
+	link_elem = job.find("a", class_="base-card__full-link")  # link to job posting
+
+	title = title_elem.text.strip() if title_elem else "N/A"
+	company = company_elem.text.strip() if company_elem else "N/A"
+	job_location = location_elem.text.strip() if location_elem else "N/A"
+	job_link = link_elem.get("href") if link_elem else "N/A"
+	job_time = time_elem.text.strip() if time_elem else "N/A"
+	job_des = scrape_job_description(job_link) if link_elem else "N/A"
+	jobs.append({"title": title, 
+				"company": company, 
+				"link": job_link, 
+				"posted time": job_time, 
+				"description": job_des,
+				"location": job_location,
+				})
+									</code></pre>		
+									
+									<p>
+										To summarize the above, we use <code class="language-py">BeautifulSoup</code> 
+										to find the html elements that contain the data we want, and extract each element with
+										<code class="language-py">.text.strip()</code>. However, extracting the job description requires
+										a little more effort. Using the link to the job listing, we need to make a new request and extract
+										the job description from the new html: 
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">				
+def scrape_job_description_single(url: str):
+	headers = {"User-Agent": UserAgent().random, # make new random user for each job
+				"Referer": "https://linkedin.com",
+				}
+
+	try:
+		# Make request to full job posting page
+		response = requests.get(url, headers=headers, proxies=proxies, timeout=15)
+
+		if response.status_code != 200:
+			print(f"Failed to retrieve job details: {response.status_code}")
+			return None
+		else:
+			soup = BeautifulSoup(response.text, "html.parser")
+			job_description_elem = soup.find("div", class_="description__text")
+			job_des = extract_clean_text(job_description_elem)
+			return job_des
+	except Exception as e: 
+		print(e)
+		return None
+
+def extract_clean_text(element):
+    # Extracts clean text with spacing preserved from bs4.element.tag
+    block_tags = {'p', 'li', 'br'}
+    texts = []
+
+    for child in tag.descendants:
+        if child.name == 'br':
+            texts.append('\n')
+        elif child.name in block_tags:
+            texts.append('\n' + child.get_text() + '\n')
+
+    # Join, normalize newlines/spaces
+    combined = ''.join(texts)
+    lines = [line.strip() for line in combined.splitlines()]
+    result = '\n'.join(line for line in lines if line)
+
+    return result
+									</code></pre>		
+									
+									<p>
+										Making the request to the job listing URL is easy, and there's just a bit
+										of processing to do on the retrieved text to form a readable job description,
+										as often the job descriptions might contain multiple paragraph, list, and line break
+										elements.
+									</p>
+
+									<h4>Summary</h4>
+									<p>
+										What have we done so far? Used <code class="language-py">requests</code> to call the 
+										LinkedIn API after properly formatting the cookies, headers, and proxies for the request;
+										used <code class="language-py">BeautifulSoup</code> to find specific html classes to extract
+										information like job title, company, and location; and finally made a small function to extract
+										the job description from the full job link.
+									</p>
+
+									<p>
+										With this method we can quickly scrape hundreds of job listings from LinkedIn based on the user's query
+										(job title, location, posted date). How can we sort through all this job data to find the most relevant 
+										jobs for the user?
+									</p>
+
+									<a href="../Projects/jobsearch_part3.html" style="font-size:20px; font-weight:bold;"><p style="text-align: center;">Let's look at job-resume matching in Part 3</p></a>
 
 								</article>
 
