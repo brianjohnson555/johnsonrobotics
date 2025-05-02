@@ -49,7 +49,7 @@
 											<a class="image featured"><img src="../images/stock_jobs.jpeg" style="display:block; height:40%; width:30%; position:relative; margin-left: auto; margin-right: auto;"/></a>
 									</div>
 									
-									<h2>Building a resume-job matching service <br> (Part 1)</h2>
+									<h2>Building a resume-job matching service <br> (Part 3)</h2>
 									<p style="text-align: center;"><i>A personal project in web scraping, ML/NLP, and cloud deployment</i></p>
 									
 								<ul style="text-align: center; font-size:small">
@@ -60,16 +60,261 @@
 								</ul>
 									
 									<h3>Part 3 Summary</h3>
-									<p><i>Work in progress!
+									<p><i>I discuss vector-embedding methods using both Facebook fastText and 
+										SBERT to rank job results, as well as NLP approaches to identify keyword
+										matches that we can use for reranking and better interpretability.
 									</i>
 									</p>
 
 									<p>
 										Reminder, full project code can be found on 
-										<a href="https://github.com/brianjohnson555/job_matching_tools" style="font-weight:bold">my github repository</a>.
+										<a href="https://github.com/brianjohnson555/job_matching_tools" target="_blank" style="font-weight:bold">my github repository</a>.
 									</p>
 
-									<a href="../Projects/jobsearch_part4.html" style="font-size:20px; font-weight:bold;"><p style="text-align: center;">To part 4</p></a>
+									<h3>Ranking jobs with vector embeddings</h3>
+									<p>
+										In Part 2 of this project, I created a web scraper that can retrieve hundreds of jobs from LinkedIn
+										from user input like this:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+input = {
+	"query": "Data Scientist",
+	"location": "Chicago",
+	"pages": 10, # search 10 pages of LinkedIn results (approx. 100 jobs)
+	"post_time": 2 # search jobs posted in the last (2) days
+}
+									</code></pre>
+
+									<p>
+										and returns job data which can be formatted into a DataFrame like this:
+									</p>
+
+									<div class="container">
+										<a class="image centered"><img src="../images/project_JS/job_results_head.JPG" style="width:100%;"/></a>
+										<figcaption>Head() of our job data DataFrame.
+										</figcation>
+									</div>
+
+									<p>
+										How do we transform these results into something useful? I want to identify the jobs that
+										best match my resume. A simple way to do this is to compute vector embeddings of the job descriptions, 
+										compute the embedding of my resume, calculate the cosine similarity between each job description embedding
+										and my resume, and return the sorted results. Let's dive into two methods to get the vector embeddings.
+									</p>
+
+									<h4>Option 1: Vector embeddings with fastText</h4>
+
+									<p>
+										The Facebook-derived package <a href="https://fasttext.cc/" target="_blank">fastText</a> does
+										exactly what the name implies: it computes text embeddings, fast! Compared to other traditional
+										NLP methods like Word2Vec, fastText is faster and creates more accurate word representations
+										by using character n-grams.
+										Applying it to our DataFrame is easy:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+import fasttext, fasttext.util
+fasttext.util.download_model('en', if_exists='ignore') 
+ft = fasttext.load_model('cc.en.300.bin') # English model with dimension 300
+
+job_df["embedding"] = job_df["description"].map(ft.get_word_vector)
+									</code></pre>
+
+									<h4>Option 2: Vector embeddings with SBERT</h4>
+									<p>
+										We can alternatively use a pre-trained SBERT model to generate embeddings. Using 
+										a transformer-based language model like SBERT over traditional NLP methods has the 
+										advantage of capturing contextual information (a typical example would be capturing
+										the different meanings of the word "bank", e.g. river bank or savings bank). Using
+										the <code class="language-py">sentence-transformers</code> package makes it so simple
+										to apply: 
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+from sentence_transformers import SentenceTransformer
+embed_model = SentenceTransformer('all-MiniLM-L6-v2')
+
+job_df["embedding"] = job_df["description"].map(lambda x: embed_model.encode(x))
+									</code></pre>
+
+									<h4>Which embedding method to choose?</h4>
+
+									<p>
+										This can be a complex question, and there are pros and cons to the two approaches
+										I presented as well as to other approaches (you can find an example blog comparing
+										methods <a target="_blank" href="https://dev.to/simplr_sh/comparing-popular-embedding-models-choosing-the-right-one-for-your-use-case-43p1">here</a>).
+									</p>
+									<p>
+										From a qualitative view, fastText computes faster than SBERT, and despite the lack of contextual embedding
+										I found it to be roughly as accurate as SBERT in my final job ranking results. However, I chose SBERT because
+										the fastText pretrained models are very large -- in contrast, a BERT model like 
+										<a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2" target="_blank">all-MiniLM-L6-v2</a>
+										is very lightweight, which will be useful when I deploy and containerize my project.
+									</p>
+
+									<h4>Embedding my resume and computing similarity</h4>
+									<p>
+										Now that we have embeddings of each job description, we can compute the 
+										cosine similarity between each one with the resume embedding. 
+										Generating an embedding of a resume is also relatively simple, it just 
+										requires a little extra preprocessing to convert a .pdf format into a Python
+										str:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+import pymupdf
+
+def parse_resume(resume_path: str):
+    doc = pymupdf.open(resume_path) # open a document
+    text = ""
+    for page in doc: # iterate the document pages
+        text += page.get_text().replace("\n", " ") # get plain text encoded as UTF-8
+    return text
+
+resume_text = parse_resume("my_resume.pdf")
+resume_embedding = embed_model.encode(resume_text)
+									</code></pre>
+
+									<p>
+										With the embedding, we can compute the cosine similarity between the vectors.
+										Cosine similarity is defined as:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+from numpy import dot
+from numpy.linalg import norm
+
+def cos_sim(a,b):
+	"""Cosine similarity between vectors a, b"""
+	return dot(a, b)/(norm(a)*norm(b))
+									</code></pre>
+
+									<p>
+										Then we can get the cosine similarity of each item in our DataFrame, and
+										sort the DataFrame values by descending similarity:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+job_df["similarity"] = job_df["embedding"].map(lambda a: cos_sim(a, b=resume_embedding))
+job_df.sort_values(by=["similarity"], ascending=False, inplace=True)
+									</code></pre>
+
+									<p>Now we've effectively ranked the jobs we scraped from LinkedIn, finding the 
+										ones which best match our resume content! But it's not necessarily clear at a 
+										glance why one job description has a greater similarity to our resume than 
+										another...
+									</p>
+
+									<h3>Finding keywords for interpretability and reranking</h3>
+									<p>
+										Although our job ranking model is already useable, I want to increase the 
+										interpretability of the results and add potential for reranking results by finding
+										keyword matches between the resume and the job description. With keywords identified,
+										we can plainly see that a job is a good fit to apply because both the job and our resume
+										contain (for example) words like "Python", "computer vision", "AWS", "machine learning",
+										"NLP". We can also perform reranking procedures to alter the results of our similarity search
+										(for example, demote jobs that mention "Java", promot jobs that mention "C++"). I'll describe
+										my approach to this below.
+									</p>
+
+									<p>
+										I built a function that find keywords with the following structure:
+									</p>
+
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+def find_keywords(nlp_model, stop_words: set, job_desc: str, resume: str):
+	job_desc = re.sub(r'[^\w\s]|[\d_]', '', job_desc) # remove punctuation
+	resume = re.sub(r'[^\w\s]|[\d_]', '', resume) # remove punctuation
+	res = nlp_model(resume)
+	des = nlp_model(job_desc)
+
+	remove_pos = ["ADV", "ADJ", "VERB"]
+
+	resumeset = set([token.text for token in res 
+						if not token.is_stop # remove stop words
+						and token.pos_ not in remove_pos # remove adverbs, adjectives, verbs
+						and token.lemma_.lower() not in stop_words]) # remove custom words
+	jobset = set([token.text for token in des 
+					if not token.is_stop 
+					and token.pos_ not in remove_pos
+					and token.lemma_.lower() not in stop_words])
+
+	return resumeset.intersection(jobset)
+									</code></pre>
+
+									<p>
+										In essence, I get a set of words from the job description, a set of words from
+										my resume, and return the intersection. To generate each set, I collect all words
+										except for:
+									</p>
+
+									<ul>
+										<li>Basic stop words (e.g. <i> a, the, and, at</i>)</li>
+										<li>POS words that are adverbs, adjectives, or verbs 
+											(e.g. <i>very, often, red, fast, develop, manage</i>)</li>
+										<li>Custom stop words that I find irrelevant or often appear in descriptions
+											(e.g. <i>benefits, dental, medical, experience, team, university, degree</i>)
+										</li>
+										<li>Geographic words (e.g. <i>Chicago, United States, US, IL</i>)
+										</li>
+									</ul>
+
+									<p>
+										Basic stop words and the POS words I want to remove require a pretrained NLP model.
+										I found <a href="https://spacy.io/" target="_blank">spaCy</a> to work well for my
+										application:
+									</p>
+									
+									<pre class="language-py" style="text-align: left"><code class="language-py">
+import spacy
+nlp_model = spacy.load("en_core_web_sm") #sm, md, lg depending on task
+									</code></pre>
+
+									<p>
+										Likewise, geographic words (city and country names and abbreviations) were obtained
+										from a list curated by <a href="https://www.geonames.org/" target="_blank">https://www.geonames.org/</a>.
+									</p>
+
+									<p>
+										With the above <code class="language-py">find_keywords()</code> function using spaCy, I can obtain a list of keywords for each job description that match
+										my resume. Then it's easy to create a function that multiplies the original cosine similarity
+										with a small positive or negative weighting based on the presence of a particular keyword.
+									</p>
+
+									<h3>Returning the results</h3>
+									<p>
+										The last step of this part of the project is to return the results in a readable,
+										interpretable format. I created two functions for this, one which simply prints results to the 
+										terminal (returning the top 10 matches after keyword reranking), and another which formats the 
+										results into an HTML file. Both can be found 
+										<a href="https://github.com/brianjohnson555/job_matching_tools" target="_blank">in my github repository</a>
+										in the analysis.py file. Here's an example of the html output:
+									</p>
+
+									<div class="container">
+										<a class="image centered"><img src="../images/project_JS/job_report_example.JPG" style="width:100%;"/></a>
+										<figcaption>Example of the html generated from my job similarity search. It returns
+											the basic job information as well as the identified keywords and elements of the
+											job description.
+										</figcation>
+									</div>
+
+									<h3>Summary</h3>
+									<p>
+										That covers Part 3 of this project. I generated vector embeddings of the job descriptions
+										and my resume, computed the cosine similarity between them to find the most-similar jobs, 
+										identified matching keywords between the job and resume for minor reranking, and created a 
+										report that highlights the most relevant jobs.
+									</p>
+									<p>
+										When combined with the web scraping app in Part 2, I now have a very easy way to sort through
+										hundreds of job postings to find the best ones to apply to. Now, I'd like to deploy this pipeline
+										on the cloud so that I don't need to use local computation, and in the future can serve this app
+										to other users.
+									</p>
+
+									<a href="../Projects/jobsearch_part4.html" style="font-size:20px; font-weight:bold;"><p style="text-align: center;">I'll deploy my system on AWS in Part 4!</p></a>
 
 								</article>
 
